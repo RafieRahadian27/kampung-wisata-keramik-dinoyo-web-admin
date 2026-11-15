@@ -1,0 +1,24 @@
+{
+  // Dipakai editor & `npm run typecheck`: mencakup SEMUA file TypeScript backend,
+  // termasuk prisma.config.ts dan prisma/seed.ts yang berada di luar src/.
+  // Kompilasi ke dist/ memakai tsconfig.build.json (hanya src/).
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": ["node"],
+    "lib": ["ES2022"],
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "sourceMap": true,
+    "noEmit": true
+  },
+  "include": ["src/**/*.ts", "prisma/**/*.ts", "prisma.config.ts", "tests/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
