@@ -8,8 +8,9 @@ import type { AdminUser, Permission, Role } from "@/types";
  * State pengguna untuk kebutuhan TAMPILAN di Client Components: siapa yang login,
  * cek izin untuk menyembunyikan tombol, serta fungsi login/logout.
  *
- * Sumber datanya adalah sesi yang sudah diverifikasi server (`getCurrentUser()` di root layout),
- * bukan cookie yang dibaca di browser — token sesi tetap HttpOnly dan tidak pernah sampai ke sini.
+ * Sumber datanya adalah sesi yang sudah diverifikasi server (`verifySession()` di layout (admin),
+ * diteruskan lewat AdminShell). Di luar area admin (login/daftar) nilainya `null` = tamu.
+ * Bukan cookie yang dibaca di browser — token sesi tetap HttpOnly dan tidak pernah sampai ke sini.
  * Ini BUKAN kontrol keamanan: menyembunyikan tombol hanya soal UX, penegakan izin tetap
  * dilakukan DAL Next.js (lib/dal.ts) dan Express (requireRole/requirePermission).
  */
@@ -28,7 +29,7 @@ export interface UserAuthValue {
 
 const UserAuthContext = createContext<AdminUser | null>(null);
 
-/** Dipasang sekali di root layout dengan pengguna hasil verifikasi server. */
+/** Dipasang di AdminShell dengan pengguna hasil verifikasi server. */
 export function UserAuthProvider({ user, children }: { user: AdminUser | null; children: ReactNode }) {
   // File ini sengaja .ts (bukan .tsx), jadi provider ditulis dengan createElement alih-alih JSX.
   return createElement(UserAuthContext.Provider, { value: user }, children);

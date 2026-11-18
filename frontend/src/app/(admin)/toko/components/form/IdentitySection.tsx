@@ -1,9 +1,11 @@
 "use client";
 
 import { Calendar, Check, Coffee, GraduationCap, Minus, Signature, Store, UserRound, UtensilsCrossed, type LucideIcon } from "lucide-react";
+import { useState } from "react";
 import { FieldShell, TextField } from "@/components/ui/FormField";
 import { FormSection } from "@/components/ui/FormSection";
 import { cn } from "@/lib/utils";
+import { hanyaKarakterNama } from "@/lib/validation/text";
 import type { TokoFormValues } from "@/types";
 import { KATEGORI_SPESIALISASI, MAX_NAMA, type TokoFormErrors } from "./formConfig";
 import type { UpdateField } from "./TokoForm";
@@ -23,6 +25,13 @@ interface SectionProps {
 }
 
 export function IdentitySection({ values, errors, updateField }: SectionProps) {
+  // Nama pengrajin hanya karakter huruf: angka & simbol dibuang saat diketik/ditempel, dengan penjelasan singkat.
+  const [peringatanNama, setPeringatanNama] = useState<string>();
+  const ubahPemilik = (raw: string) => {
+    const { value, ditolak } = hanyaKarakterNama(raw);
+    setPeringatanNama(ditolak ? "Angka dan simbol tidak diizinkan — hanya huruf, spasi, titik, petik, tanda hubung." : undefined);
+    updateField("pemilik", value);
+  };
   const toggleKategori = (kategori: string) => {
     const next = values.kategori.includes(kategori)
       ? values.kategori.filter((item) => item !== kategori)
@@ -49,10 +58,14 @@ export function IdentitySection({ values, errors, updateField }: SectionProps) {
         <TextField
           label="Nama Pengrajin / Penanggung Jawab"
           required
-          placeholder="Nama lengkap"
+          placeholder="Nama lengkap, mis. Ibu Sri Hartatik"
+          autoComplete="name"
+          maxLength={100}
           value={values.pemilik}
-          onChange={(event) => updateField("pemilik", event.target.value)}
-          error={errors.pemilik}
+          onChange={(event) => ubahPemilik(event.target.value)}
+          onBlur={() => setPeringatanNama(undefined)}
+          error={errors.pemilik ?? peringatanNama}
+          hint="Hanya huruf — gelar boleh bertitik (H., Bpk.)."
           trailing={<UserRound className="size-4 text-on-surface-variant" aria-hidden />}
           className="pr-11"
         />

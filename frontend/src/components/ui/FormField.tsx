@@ -1,8 +1,8 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
 import { useId, type ComponentProps, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select";
 
 const CONTROL_BASE =
   "w-full rounded-xl bg-surface-low text-sm text-on-surface placeholder:text-on-surface-variant/70 outline-none transition " +
@@ -103,27 +103,51 @@ export function TextField({
   );
 }
 
-type SelectFieldProps = Omit<ComponentProps<"select">, "id"> & {
+export interface SelectOption {
+  value: string;
   label: string;
-  options: string[];
+  /** Keterangan kecil di bawah label pada daftar pilihan. */
+  description?: string;
+}
+
+type SelectFieldProps = {
+  label: string;
+  /** String biasa (nilai = label) atau objek { value, label, description }. */
+  options: (string | SelectOption)[];
+  value: string;
+  onValueChange: (value: string) => void;
+  placeholder?: string;
   hint?: ReactNode;
   error?: string;
+  required?: boolean;
+  disabled?: boolean;
+  className?: string;
+  containerClassName?: string;
 };
 
-export function SelectField({ label, options, hint, error, required, className, ...props }: SelectFieldProps) {
+/** Radix Select tidak menerima value "" untuk item, jadi pilihan kosong ("tanpa label") dipetakan ke penanda ini. */
+const KOSONG = "__kosong__";
+const keRadix = (value: string) => (value === "" ? KOSONG : value);
+const dariRadix = (value: string) => (value === KOSONG ? "" : value);
+
+/** Dropdown formulir berbasis komponen Select shadcn/ui (lihat components/ui/select.tsx). */
+export function SelectField({ label, options, value, onValueChange, placeholder = "Pilih…", hint, error, required, disabled, className, containerClassName }: SelectFieldProps) {
   const id = useId();
+  const items = options.map((option) => (typeof option === "string" ? { value: option, label: option || "— Tanpa label —" } : option));
   return (
-    <FieldShell id={id} label={label} required={required} hint={hint} error={error}>
-      <div className="relative">
-        <select id={id} required={required} className={cn(CONTROL_BASE, "h-11 cursor-pointer appearance-none truncate px-4 pr-10", className)} {...props}>
-          {options.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
+    <FieldShell id={id} label={label} required={required} hint={hint} error={error} className={containerClassName}>
+      <Select value={value === "" && !items.some((item) => item.value === "") ? undefined : keRadix(value)} onValueChange={(next) => onValueChange(dariRadix(next))} disabled={disabled}>
+        <SelectTrigger id={id} aria-invalid={Boolean(error) || undefined} aria-describedby={error ? `${id}-error` : undefined} aria-required={required || undefined} className={className}>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {items.map((item) => (
+            <SelectItem key={item.value || KOSONG} value={keRadix(item.value)} description={item.description}>
+              {item.label}
+            </SelectItem>
           ))}
-        </select>
-        <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-on-surface-variant" aria-hidden />
-      </div>
+        </SelectContent>
+      </Select>
     </FieldShell>
   );
 }

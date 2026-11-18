@@ -95,9 +95,9 @@ export function LoginForm({ nextPath, justLoggedOut, sessionExpired, justRegiste
   };
 
   return (
-    <div className="w-full max-w-md rounded-3xl bg-surface-lowest p-6 shadow-float sm:p-10">
-      <h2 className="font-serif text-base leading-6 font-bold text-on-surface">Masuk ke Panel Pengelolaan</h2>
-      <p className="mt-2 text-base leading-6 text-on-surface-variant">Khusus admin paguyuban dan pengrajin terdaftar.</p>
+    <div className="w-full max-w-xl rounded-3xl bg-surface-lowest p-6 shadow-float sm:p-10 xl:p-12">
+      <h2 className="font-serif text-2xl leading-8 font-bold text-on-surface lg:text-3xl lg:leading-10">Masuk ke Panel Pengelolaan</h2>
+      <p className="mt-2 text-base leading-6 text-on-surface-variant lg:text-lg lg:leading-7">Khusus admin paguyuban dan pengrajin terdaftar.</p>
 
       <form onSubmit={handleSubmit} noValidate className="mt-8 flex flex-col gap-6">
         {errors.form && (

@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type AnimationEvent, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 interface ModalProps {
@@ -14,10 +14,25 @@ interface ModalProps {
   accentBar?: boolean;
 }
 
+/**
+ * Dialog popup dengan animasi masuk (latar memudar, kartu naik + membesar) dan keluar.
+ *
+ * Agar animasi KELUAR sempat terlihat, dialog tidak langsung dibongkar saat `open` menjadi false:
+ * state `tampil` menahannya di DOM dengan animasi keluar, lalu baru dilepas saat `animationend`.
+ * Fokus, kunci scroll, dan tombol Escape tetap mengikuti `open` (langsung bereaksi saat ditutup).
+ */
 export function Modal({ open, onClose, labelledBy, children, className, accentBar }: ModalProps) {
   // useRef: akses langsung ke elemen DOM dialog untuk fokus, tanpa render ulang.
   const dialogRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
+  const [tampil, setTampil] = useState(open);
+  // Isi terakhir saat masih terbuka. Banyak dialog memakai pola `open={data !== null}` — begitu
+  // ditutup datanya langsung null, jadi tanpa ini kartu akan kosong selama animasi keluar.
+  const [isiTerakhir, setIsiTerakhir] = useState(children);
+
+  // Menyesuaikan state saat prop berubah (pola React yang dianjurkan, tanpa efek tambahan).
+  if (open && !tampil) setTampil(true);
+  if (open && isiTerakhir !== children) setIsiTerakhir(children);
 
   useEffect(() => {
     if (!open) return;
@@ -39,19 +54,32 @@ export function Modal({ open, onClose, labelledBy, children, className, accentBa
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!tampil) return null;
+
+  const closing = !open;
+  // Hanya animasi milik kartu dialog itu sendiri (bukan spinner/skeleton di dalamnya) yang dihitung.
+  const handleAnimationEnd = (event: AnimationEvent<HTMLDivElement>) => {
+    if (closing && event.target === event.currentTarget) setTampil(false);
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-scrim backdrop-blur-sm" onClick={onClose} aria-hidden />
+    <div className={cn("fixed inset-0 z-50 flex items-center justify-center p-4", closing && "pointer-events-none")}>
+      <div
+        className={cn("absolute inset-0 bg-scrim backdrop-blur-sm", closing ? "animate-overlay-out" : "animate-overlay-in")}
+        onClick={onClose}
+        aria-hidden
+      />
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
+        aria-hidden={closing || undefined}
         tabIndex={-1}
+        onAnimationEnd={handleAnimationEnd}
         className={cn(
           "relative max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-3xl bg-surface shadow-float outline-none",
+          closing ? "animate-dialog-out" : "animate-dialog-in",
           className,
         )}
       >
@@ -64,7 +92,7 @@ export function Modal({ open, onClose, labelledBy, children, className, accentBa
         >
           <X className="size-5" />
         </button>
-        {children}
+        {open ? children : isiTerakhir}
       </div>
     </div>
   );

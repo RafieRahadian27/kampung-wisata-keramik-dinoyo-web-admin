@@ -10,6 +10,7 @@ import { LorongDistributionCard } from "./components/LorongDistributionCard";
 import { TokoManager } from "./components/TokoManager";
 import { TokoStats } from "./components/TokoStats";
 import { VerificationStandardCard } from "./components/VerificationStandardCard";
+import { FreshOnNavigate } from "@/components/layout/FreshOnNavigate";
 
 export const metadata: Metadata = { title: "Kelola Toko & Pengrajin" };
 
@@ -18,7 +19,7 @@ export default async function KelolaTokoPage() {
   const { data, ringkasan } = await getTokoList();
 
   return (
-    <>
+    <FreshOnNavigate>
       <TokoStats ringkasan={ringkasan} />
       <PageHeader
         eyebrow={<Eyebrow icon={<Landmark />}>Sentra Keramik Kota Malang</Eyebrow>}
@@ -44,6 +45,6 @@ export default async function KelolaTokoPage() {
         <LorongDistributionCard toko={data} />
         <VerificationStandardCard />
       </div>
-    </>
+    </FreshOnNavigate>
   );
 }

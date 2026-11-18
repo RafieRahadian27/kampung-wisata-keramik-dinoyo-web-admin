@@ -1,12 +1,13 @@
 import { Sparkles } from "lucide-react";
 import Image from "next/image";
+import { IMAGE_SIZES } from "@/constants/imageSizes";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { IconTile } from "@/components/ui/IconTile";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 import { formatRupiah } from "@/lib/utils";
 import type { Produk } from "@/types";
-import { produkBadgeTone } from "./produkMeta";
+import { produkBadgeTone } from "./produkTone";
 
 const JUMLAH_SOROTAN = 3;
 
@@ -40,7 +41,7 @@ export function CuratedHighlights({ produk }: { produk: Produk[] }) {
                 src={item.foto}
                 alt={item.nama}
                 fill
-                sizes="(min-width: 768px) 33vw, 100vw"
+                sizes={IMAGE_SIZES.tigaKolom}
                 className="object-cover transition duration-500 group-hover:scale-105"
               />
               {item.badge && (

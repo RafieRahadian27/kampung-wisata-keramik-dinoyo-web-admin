@@ -31,3 +31,23 @@ export function inisial(nama: string): string {
     .map((kata) => kata[0]?.toUpperCase() ?? "")
     .join("");
 }
+
+/** Waktu relatif berbahasa Indonesia: "baru saja", "5 menit lalu", "3 hari lalu", lalu tanggal. */
+export function formatRelatif(iso: string, now: Date = new Date()): string {
+  const detik = Math.round((now.getTime() - new Date(iso).getTime()) / 1000);
+  if (detik < 60) return "baru saja";
+  const menit = Math.round(detik / 60);
+  if (menit < 60) return `${menit} menit lalu`;
+  const jam = Math.round(menit / 60);
+  if (jam < 24) return `${jam} jam lalu`;
+  const hari = Math.round(jam / 24);
+  if (hari < 7) return `${hari} hari lalu`;
+  return new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", year: "numeric" }).format(new Date(iso));
+}
+
+/** Angka ringkas: 1.250.000 → "1,3 jt", 12.400 → "12,4 rb". */
+export function formatRingkas(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toLocaleString("id-ID", { maximumFractionDigits: 1 })} jt`;
+  if (value >= 10_000) return `${(value / 1_000).toLocaleString("id-ID", { maximumFractionDigits: 1 })} rb`;
+  return formatAngka(value);
+}

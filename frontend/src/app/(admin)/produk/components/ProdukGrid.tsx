@@ -1,10 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import { IMAGE_SIZES } from "@/constants/imageSizes";
 import { Badge } from "@/components/ui/Badge";
 import { formatRupiah } from "@/lib/utils";
 import type { Produk } from "@/types";
-import { ProdukActions, STATUS_PRODUK_TONE, produkBadgeTone } from "./produkMeta";
+import { ProdukActions } from "./produkMeta";
+import { STATUS_PRODUK_TONE, produkBadgeTone } from "./produkTone";
 
 interface ProdukGridProps {
   items: Produk[];
@@ -19,7 +21,7 @@ export function ProdukGrid({ items, onShare, onDelete }: ProdukGridProps) {
       {items.map((produk) => (
         <li key={produk.id} className="flex flex-col overflow-hidden rounded-2xl bg-surface-low">
           <div className="relative aspect-square w-full bg-surface-high">
-            <Image src={produk.foto} alt={produk.nama} fill sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw" className="object-cover" />
+            <Image src={produk.foto} alt={produk.nama} fill sizes={IMAGE_SIZES.gridProduk} className="object-cover" />
             {produk.badge && (
               <Badge tone={produkBadgeTone(produk.badge)} uppercase className="absolute top-3 left-3 text-[10px]">
                 {produk.badge}

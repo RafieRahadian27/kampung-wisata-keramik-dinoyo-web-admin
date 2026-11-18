@@ -32,7 +32,7 @@ export function DashboardGreeting({ admin, tanggal }: DashboardGreetingProps) {
         <ButtonLink href="/toko/tambah" variant="tonal">
           <Warehouse className="size-4" aria-hidden />+ Tambah Toko
         </ButtonLink>
-        <ButtonLink href="/produk" variant="primary" className="px-5">
+        <ButtonLink href="/produk/tambah" variant="primary" className="px-5">
           <CirclePlus className="size-4" aria-hidden />+ Tambah Produk
         </ButtonLink>
       </div>

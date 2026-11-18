@@ -10,6 +10,7 @@ import { AccountActivityLog } from "./components/AccountActivityLog";
 import { AkunManager } from "./components/AkunManager";
 import { AkunStats } from "./components/AkunStats";
 import { SupportCard } from "./components/SupportCard";
+import { FreshOnNavigate } from "@/components/layout/FreshOnNavigate";
 
 export const metadata: Metadata = { title: "Kelola Akun Pengrajin" };
 
@@ -18,7 +19,7 @@ export default async function KelolaAkunPage() {
   const { data, ringkasan } = await getAkunList();
 
   return (
-    <>
+    <FreshOnNavigate>
       <PageHeader
         eyebrow={
           <div className="flex flex-col gap-3">
@@ -46,6 +47,6 @@ export default async function KelolaAkunPage() {
       {/* Riwayat login & perubahan akses (data statis sementara) */}
       <AccountActivityLog riwayat={RIWAYAT_AKUN} />
       <SupportCard />
-    </>
+    </FreshOnNavigate>
   );
 }

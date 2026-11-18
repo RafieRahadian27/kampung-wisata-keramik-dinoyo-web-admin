@@ -8,6 +8,8 @@ export const CACHE_TAGS = {
   produk: "produk",
   akun: "akun",
   laporan: "laporan",
+  beranda: "beranda",
+  laporanToko: "laporan-toko",
 } as const;
 
 export type CacheTag = (typeof CACHE_TAGS)[keyof typeof CACHE_TAGS];

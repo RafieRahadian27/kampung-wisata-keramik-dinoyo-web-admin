@@ -5,7 +5,8 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { cn, formatRupiah } from "@/lib/utils";
 import type { Produk } from "@/types";
-import { ProdukActions, STATUS_PRODUK_TONE, produkBadgeTone } from "./produkMeta";
+import { ProdukActions } from "./produkMeta";
+import { STATUS_PRODUK_TONE, produkBadgeTone } from "./produkTone";
 
 interface ProdukTableProps {
   rows: Produk[];

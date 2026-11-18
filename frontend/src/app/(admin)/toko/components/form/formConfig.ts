@@ -1,4 +1,5 @@
 import type { Toko, TokoFormValues } from "@/types";
+import { validateNamaPengrajin } from "@/lib/validation/text";
 
 export const KATEGORI_SPESIALISASI = ["Semi-Porselen", "Gerabah Alami", "Guci & Hiasan", "Tableware Kafe", "Edukasi Workshop"] as const;
 
@@ -65,7 +66,8 @@ export function validateTokoForm(values: TokoFormValues): TokoFormErrors {
 
   if (!values.nama.trim()) errors.nama = "Nama toko wajib diisi.";
   else if (values.nama.length > MAX_NAMA) errors.nama = `Maksimal ${MAX_NAMA} karakter.`;
-  if (!values.pemilik.trim()) errors.pemilik = "Nama penanggung jawab wajib diisi.";
+  const errorPemilik = validateNamaPengrajin(values.pemilik);
+  if (errorPemilik) errors.pemilik = errorPemilik;
   if (!values.tahunBerdiri || values.tahunBerdiri < 1900 || values.tahunBerdiri > tahunSekarang) {
     errors.tahunBerdiri = `Isi tahun antara 1900–${tahunSekarang}.`;
   }

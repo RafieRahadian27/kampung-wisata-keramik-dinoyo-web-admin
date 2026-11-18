@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE } from "@/lib/session";
 
-const ADMIN_PREFIXES = ["/dashboard", "/toko", "/produk", "/akun", "/laporan"];
+const ADMIN_PREFIXES = ["/dashboard", "/beranda", "/toko", "/produk", "/akun", "/laporan", "/laporan-toko", "/profil"];
 
 /**
  * Proxy (pengganti middleware di Next.js 16): pengecekan OPTIMISTIK saja.
@@ -27,5 +27,15 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/toko/:path*", "/produk/:path*", "/akun/:path*", "/laporan/:path*"],
+  matcher: [
+    "/",
+    "/dashboard/:path*",
+    "/beranda/:path*",
+    "/toko/:path*",
+    "/produk/:path*",
+    "/akun/:path*",
+    "/laporan/:path*",
+    "/laporan-toko/:path*",
+    "/profil/:path*",
+  ],
 };

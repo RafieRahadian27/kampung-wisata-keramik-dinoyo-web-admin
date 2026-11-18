@@ -216,7 +216,7 @@ export function RegisterForm() {
 
   return (
     <div className="w-full max-w-2xl rounded-3xl bg-surface-lowest p-5 shadow-float sm:p-10">
-      <h2 className="font-serif text-base leading-6 font-bold text-on-surface">Daftar Akun Pengrajin</h2>
+      <h2 className="font-serif text-2xl leading-8 font-bold text-on-surface lg:text-3xl lg:leading-10">Daftar Akun Pengrajin</h2>
       <p className="mt-2 text-sm leading-[22px] text-on-surface-variant sm:text-base sm:leading-6">
         Lengkapi data di bawah ini. Akun bisa dipakai setelah diverifikasi admin paguyuban.
       </p>
@@ -275,13 +275,12 @@ export function RegisterForm() {
           />
           <TextField {...fieldProps("lokasi")} label="Lokasi Toko" autoComplete="street-address" placeholder="cth. Gg. IX No. 21" />
           <SelectField
-            name="peran"
             label="Peran"
             required
             options={PERAN}
             value={values.peran}
-            onChange={handleChange("peran")}
-            onBlur={handleBlur("peran")}
+            // Select shadcn mengirim nilai langsung (bukan event); diteruskan ke handler yang sama dengan input lain.
+            onValueChange={(peran) => handleChange("peran")({ target: { value: peran } } as ChangeEvent<HTMLSelectElement>)}
             error={errors.peran}
           />
         </FormGroup>

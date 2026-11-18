@@ -9,6 +9,7 @@ import { RecentActivityCard } from "./components/RecentActivityCard";
 import { VerificationPanel } from "./components/VerificationPanel";
 import { WeekendClassCard } from "./components/WeekendClassCard";
 import { WhatsappTrafficCard } from "./components/WhatsappTrafficCard";
+import { FreshOnNavigate } from "@/components/layout/FreshOnNavigate";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -21,7 +22,7 @@ export default async function DashboardPage() {
   const { admin, tanggal, statistik, verifikasi, whatsapp, kelasAkhirPekan } = await getDashboard();
 
   return (
-    <>
+    <FreshOnNavigate>
       <DashboardGreeting admin={admin} tanggal={tanggal} />
       <KpiGrid statistik={statistik} />
       {/* Split 7/5: antrean verifikasi toko di kiri, trafik WhatsApp & kelas akhir pekan di kanan. */}
@@ -40,6 +41,6 @@ export default async function DashboardPage() {
       {/* Linimasa aktivitas terbaru — sementara memakai data statis sampai endpoint audit log tersedia. */}
       <RecentActivityCard aktivitas={AKTIVITAS_TERBARU} />
       <QuickActions />
-    </>
+    </FreshOnNavigate>
   );
 }

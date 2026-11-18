@@ -11,6 +11,7 @@ import { ReportStats } from "./components/ReportStats";
 import { ReportToolbar } from "./components/ReportToolbar";
 import { ReservationHistory } from "./components/ReservationHistory";
 import { VisitTrendChart } from "./components/VisitTrendChart";
+import { FreshOnNavigate } from "@/components/layout/FreshOnNavigate";
 
 export const metadata: Metadata = { title: "Laporan Kunjungan & Reservasi" };
 
@@ -19,7 +20,7 @@ export default async function LaporanPage() {
   const laporan = await getLaporan();
 
   return (
-    <>
+    <FreshOnNavigate>
       <div className="flex flex-col gap-5">
         <PageHeader
           eyebrow={
@@ -54,6 +55,6 @@ export default async function LaporanPage() {
           <QuickDownloadsCard unduhan={laporan.unduhan} className="md:col-span-2 xl:col-span-1" />
         </div>
       </div>
-    </>
+    </FreshOnNavigate>
   );
 }

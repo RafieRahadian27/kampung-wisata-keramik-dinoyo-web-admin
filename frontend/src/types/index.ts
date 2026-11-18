@@ -15,7 +15,11 @@ export type Permission =
   | "produk:read"
   | "produk:delete"
   | "akun:read"
-  | "akun:update";
+  | "akun:update"
+  | "beranda:read"
+  | "produk:create"
+  | "laporan-toko:read"
+  | "profil:update";
 
 /** Pengguna yang sedang login, hasil verifikasi sesi oleh Express (`GET /auth/me`). */
 export interface AdminUser {
@@ -96,8 +100,12 @@ export interface PengajuanToko {
   lokasiGang: string;
   pengrajin: string;
   keahlian: string;
-  diajukan: string;
   foto: string;
+  /** ISO 8601 — awal hitung mundur verifikasi. */
+  diajukanPada: string;
+  /** ISO 8601 — diajukanPada + 3×24 jam. Lewat dari ini pengajuan otomatis dinonaktifkan. */
+  batasWaktu: string;
+  status: "menunggu" | "kedaluwarsa";
 }
 
 export type StatusProduk = "tersedia" | "habis" | "preorder";
@@ -130,7 +138,23 @@ export interface RingkasanProduk {
   pengrajin: number;
   stokTersedia: number;
   preOrder: number;
+  habis: number;
   suhuBakar: string;
+}
+
+/** Body POST /produk (formulir Tambah Produk). */
+export interface ProdukFormValues {
+  tokoSlug: string;
+  nama: string;
+  kategori: string;
+  teknik: string;
+  bahan: string;
+  harga: number;
+  catatanHarga: string;
+  status: StatusProduk;
+  stok: number;
+  lokasiStok: string;
+  badge: string;
 }
 
 export type PeranAkun = "Pemilik Toko" | "Staf Pengrajin";
@@ -254,6 +278,151 @@ export interface LaporanData {
     daftar: { nama: string; detail: string; tren: "naik" | "stabil" }[];
   };
   unduhan: { judul: string; detail: string; jenis: "kas" | "sertifikat" | "rekap" }[];
+}
+
+/** Baris audit log yang sudah diterjemahkan backend menjadi kalimat (utils/aktivitas.ts). */
+export interface AktivitasAudit {
+  id: string;
+  jenis: "produk" | "toko" | "akun" | "verifikasi";
+  judul: string;
+  keterangan: string;
+  oleh: string;
+  waktu: string;
+}
+
+/** GET /beranda — Dashboard Toko (khusus toko milik pengguna). */
+export interface KelengkapanToko {
+  persen: number;
+  selesai: number;
+  total: number;
+  item: { label: string; ok: boolean; href: string; saran: string }[];
+}
+
+export type StatusTahapan = "selesai" | "berjalan" | "menunggu" | "terhenti";
+
+export interface BerandaToko {
+  slug: string;
+  nama: string;
+  foto: string;
+  lokasiGang: string;
+  alamat: string;
+  spesialisasi: string;
+  kategori: string[];
+  jamBuka: string;
+  whatsapp: string;
+  tahunBerdiri: number;
+  status: StatusToko;
+  badge: BadgeToko | null;
+  akreditasi: boolean;
+  aktifPublik: boolean;
+  jumlahProduk: number;
+  diperbarui: string;
+  kelengkapan: KelengkapanToko;
+  tahapan: { label: string; keterangan: string; status: StatusTahapan }[];
+}
+
+export interface BerandaData {
+  pengguna: { nama: string; sapaan: string; peran: string };
+  salam: string;
+  tanggal: string;
+  toko: BerandaToko[];
+  produk: RingkasanProduk & { termurah: number; termahal: number; rataRata: number; nilaiKatalog: number };
+  kategori: KategoriProduk[];
+  produkTerbaru: Produk[];
+  perluPerhatian: Produk[];
+  langkahBerikutnya: { label: string; toko: string; href: string }[];
+  aktivitas: AktivitasAudit[];
+  agenda: { tanggal: string; judul: string; lokasi: string; jenis: "kurasi" | "pelatihan" | "festival" | "rapat" }[];
+  performa: {
+    sumber: "simulasi" | "pelacakan";
+    tujuhHari: { hari: string; kunjungan: number; klikWhatsapp: number }[];
+    kunjungan: number;
+    klikWhatsapp: number;
+    konversi: number;
+    reservasi: number;
+    rating: number;
+    jumlahUlasan: number;
+    pertumbuhan: number;
+  };
+}
+
+export type PeriodeLaporan = 7 | 30 | 90;
+
+/** GET /laporan-toko — angka kunjungan masih simulasi (`sumber`), daftar toko & produk asli. */
+export interface LaporanTokoData {
+  sumber: "simulasi" | "pelacakan";
+  periode: PeriodeLaporan;
+  periodeLabel: string;
+  ringkasan: {
+    kunjungan: { nilai: number; pertumbuhan: number; rataHarian: number };
+    klikWhatsapp: { nilai: number; konversi: number };
+    reservasi: { nilai: number; peserta: number };
+    produkDilihat: { nilai: number };
+    transaksi: { nilai: number; estimasiOmzet: number };
+    rating: { nilai: number; ulasan: number };
+  };
+  tren: { label: string; kunjungan: number; klikWhatsapp: number }[];
+  jamRamai: { slot: string[]; baris: { hari: string; nilai: number[] }[] };
+  corong: { tahap: string; nilai: number }[];
+  sumberPengunjung: { nama: string; persen: number }[];
+  asalPengunjung: { nama: string; persen: number }[];
+  banding: {
+    konversiToko: number;
+    konversiSentra: number;
+    kunjunganHarianToko: number;
+    kunjunganHarianSentra: number;
+    ratingToko: number;
+    ratingSentra: number;
+  };
+  perToko: { slug: string; nama: string; lokasiGang: string; kunjungan: number; klikWhatsapp: number; reservasi: number; pertumbuhan: number }[];
+  produkPopuler: { id: number; nama: string; foto: string; kategori: string; harga: number; dilihat: number; tanyaWhatsapp: number }[];
+  reservasi: {
+    id: string;
+    pemesan: string;
+    detail: string;
+    paket: string;
+    toko: string;
+    tanggal: string;
+    jam: string;
+    nilai: number;
+    status: "selesai" | "terjadwal" | "menunggu";
+  }[];
+  ulasan: { nama: string; asal: string; teks: string; rating: number; tanggal: string }[];
+}
+
+/** GET /produk/harga-pasar — acuan harga per kategori (agregat seluruh sentra). */
+export interface HargaPasar {
+  kategori: string;
+  jumlah: number;
+  termurah: number;
+  termahal: number;
+  rataRata: number;
+}
+
+/** GET /auth/profil — Profil & Keamanan Akun. */
+export interface SesiAktif {
+  id: string;
+  perangkat: string;
+  ipAddress: string | null;
+  dibuat: string;
+  berakhir: string;
+  sesiIni: boolean;
+}
+
+export interface ProfilData {
+  nama: string;
+  sapaan: string;
+  email: string;
+  username: string;
+  peran: string;
+  role: Role;
+  terakhirLogin: string | null;
+  akun: { nik: string; whatsapp: string; toko: string; lokasi: string; peran: PeranAkun; status: StatusAkun } | null;
+  toko: { slug: string; nama: string }[];
+  statistik: { jumlahToko: number; jumlahProduk: number; totalAktivitas: number; jumlahSesi: number };
+  keamanan: { skor: number; passwordTerakhir: string | null; pemeriksaan: { label: string; ok: boolean; saran: string }[] };
+  aktivitas: AktivitasAudit[];
+  sesi: SesiAktif[];
 }
 
 /* Data statis frontend (lihat src/data) — menunggu endpoint audit log di Express. */

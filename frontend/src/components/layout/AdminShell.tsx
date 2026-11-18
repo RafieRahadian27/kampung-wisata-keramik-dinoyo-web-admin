@@ -11,8 +11,9 @@ import { Sidebar } from "./Sidebar";
  * Kerangka halaman admin: Sidebar (kiri) + Header (atas) + konten.
  * `children` tetap Server Component yang dirender di server lalu "dimasukkan" ke sini.
  *
- * `user` di sini hasil `verifySession()` layout (admin), sehingga dijamin tidak null;
- * provider ini menimpa nilai dari root layout untuk seluruh area admin.
+ * `user` di sini hasil `verifySession()` layout (admin), sehingga dijamin tidak null.
+ * Provider ini satu-satunya sumber data pengguna untuk Client Components di area admin
+ * (root layout sengaja tidak membaca sesi agar tetap bisa diprerender).
  */
 export function AdminShell({ user, children }: { user: AdminUser; children: React.ReactNode }) {
   return (

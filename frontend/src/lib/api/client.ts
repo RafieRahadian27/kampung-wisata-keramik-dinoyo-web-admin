@@ -1,14 +1,19 @@
 import {
   type ActionResult,
+  cabutSesiLain,
+  createProduk,
   createToko,
+  gantiPassword,
+  ubahSapaan,
   putuskanPengajuan,
   removeProduk,
   removeToko,
   updateAkunStatus,
   updateToko,
+  uploadFotoProduk,
   uploadMediaToko,
 } from "@/lib/actions/api";
-import type { MediaToko, StatusAkun, TokoFormValues } from "@/types";
+import type { MediaToko, ProdukFormValues, StatusAkun, TokoFormValues } from "@/types";
 import { ApiError } from "./config";
 
 /**
@@ -36,7 +41,19 @@ export const tokoApi = {
 };
 
 export const produkApi = {
+  create: (values: ProdukFormValues) => unwrap(createProduk(values)),
+  uploadFoto: (id: number, file: File) => {
+    const formData = new FormData();
+    formData.append("berkas", file);
+    return unwrap(uploadFotoProduk(id, formData));
+  },
   remove: (id: number) => unwrap(removeProduk(id)),
+};
+
+export const profilApi = {
+  gantiPassword: (passwordLama: string, passwordBaru: string) => unwrap(gantiPassword(passwordLama, passwordBaru)),
+  cabutSesiLain: () => unwrap(cabutSesiLain()),
+  ubahSapaan: (sapaan: string) => unwrap(ubahSapaan(sapaan)),
 };
 
 export const akunApi = {

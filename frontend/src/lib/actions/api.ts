@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { authFetch, getCurrentUser } from "@/lib/dal";
 import { SESSION_COOKIE } from "@/lib/session";
 import { isValidSlug, validateFoto } from "@/lib/validation/upload";
-import type { Akun, ApiResponse, MediaToko, Permission, StatusAkun, Toko, TokoFormValues } from "@/types";
+import type { Akun, ApiResponse, MediaToko, Permission, Produk, ProdukFormValues, StatusAkun, Toko, TokoFormValues } from "@/types";
 
 /**
  * Mutasi data lewat Server Action: browser tidak lagi memanggil Express langsung,
@@ -132,6 +132,49 @@ export async function removeProduk(id: number) {
   if (denied) return denied;
   if (!isPositiveInt(id)) return fail(400, "ID produk tidak valid.");
   return call<{ message: string }>(`/produk/${seg(String(id))}`, { method: "DELETE" });
+}
+
+export async function createProduk(values: ProdukFormValues) {
+  const denied = await authorize("produk:create");
+  if (denied) return denied;
+  if (!isPlainObject(values) || !isValidSlug(values.tokoSlug)) return fail(400, "Data produk tidak valid.");
+  return call<ApiResponse<Produk>>("/produk", { method: "POST", payload: values });
+}
+
+/** Foto produk → Express → Vercel Blob (validasi sama dengan foto sampul toko). */
+export async function uploadFotoProduk(id: number, formData: FormData) {
+  const denied = await authorize("produk:create");
+  if (denied) return denied;
+  if (!isPositiveInt(id) || !(formData instanceof FormData)) return fail(400, "Permintaan unggah tidak valid.");
+
+  const file = formData.get("berkas");
+  if (!(file instanceof File)) return fail(400, "Pilih gambar yang akan diunggah.");
+  const error = validateFoto(file);
+  if (error) return fail(422, error);
+
+  return call<ApiResponse<Produk>>(`/produk/${seg(String(id))}/foto`, { method: "PUT", payload: file, contentType: file.type });
+}
+
+export async function gantiPassword(passwordLama: string, passwordBaru: string) {
+  const denied = await authorize("profil:update");
+  if (denied) return denied;
+  if (typeof passwordLama !== "string" || typeof passwordBaru !== "string" || passwordLama === "" || passwordBaru === "") {
+    return fail(400, "Kata sandi wajib diisi.");
+  }
+  return call<ApiResponse<{ sesiDicabut: number }>>("/auth/password", { method: "PATCH", payload: { passwordLama, passwordBaru } });
+}
+
+export async function ubahSapaan(sapaan: string) {
+  const denied = await authorize("profil:update");
+  if (denied) return denied;
+  if (typeof sapaan !== "string" || sapaan.trim().length < 3 || sapaan.length > 60) return fail(400, "Nama tampilan 3–60 karakter.");
+  return call<ApiResponse<{ sapaan: string }>>("/auth/profil", { method: "PATCH", payload: { sapaan } });
+}
+
+export async function cabutSesiLain() {
+  const denied = await authorize("profil:update");
+  if (denied) return denied;
+  return call<ApiResponse<{ sesiDicabut: number }>>("/auth/sesi", { method: "DELETE" });
 }
 
 export async function updateAkunStatus(id: number, status: StatusAkun) {

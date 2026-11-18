@@ -1,7 +1,8 @@
 "use client";
 
-import { LayoutGrid, Rows3 } from "lucide-react";
+import { LayoutGrid, Plus, Rows3, Store } from "lucide-react";
 import { useMemo, useState } from "react";
+import { ButtonLink } from "@/components/ui/Button";
 import { ChipGroup } from "@/components/ui/ChipGroup";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -26,9 +27,11 @@ interface ProdukManagerProps {
   initialProduk: Produk[];
   kategori: KategoriProduk[];
   totalKoleksi: number;
+  /** Tampilan pengrajin: filter toko hilang bila hanya satu toko, teks disesuaikan. */
+  modePengrajin?: boolean;
 }
 
-export function ProdukManager({ initialProduk, kategori, totalKoleksi }: ProdukManagerProps) {
+export function ProdukManager({ initialProduk, kategori, totalKoleksi, modePengrajin = false }: ProdukManagerProps) {
   const { showToast } = useToast();
   const [produkList, setProdukList] = useState(initialProduk);
   const [keyword, setKeyword] = useState("");
@@ -45,11 +48,17 @@ export function ProdukManager({ initialProduk, kategori, totalKoleksi }: ProdukM
     return [{ value: "", label: "Semua Toko Pengrajin" }, ...names.map((name) => ({ value: name, label: name }))];
   }, [initialProduk]);
 
-  const kategoriSelectOptions = [{ value: "", label: "Semua Kategori" }, ...kategori.map((item) => ({ value: item.nama, label: item.nama }))];
-  const kategoriChips = [
-    { value: "", label: "Semua Kategori" },
-    ...kategori.map((item) => ({ value: item.nama, label: `${item.nama} (${item.jumlah})` })),
-  ];
+  // Jumlah per kategori dihitung dari daftar yang sedang dimuat (ikut berkurang saat produk dihapus);
+  // kategori tanpa produk tidak ditampilkan sebagai chip agar tidak membingungkan.
+  const kategoriChips = useMemo(() => {
+    const jumlah = new Map<string, number>();
+    for (const produk of produkList) jumlah.set(produk.kategori, (jumlah.get(produk.kategori) ?? 0) + 1);
+    return [
+      { value: "", label: `Semua Kategori (${produkList.length})` },
+      ...kategori.filter((item) => jumlah.has(item.nama)).map((item) => ({ value: item.nama, label: `${item.nama} (${jumlah.get(item.nama)})` })),
+    ];
+  }, [kategori, produkList]);
+  const tampilFilterToko = tokoOptions.length > 2;
 
   const filtered = useMemo(
     () =>
@@ -109,11 +118,17 @@ export function ProdukManager({ initialProduk, kategori, totalKoleksi }: ProdukM
   return (
     <>
       <section aria-label="Filter produk" className="flex flex-col gap-3 rounded-2xl bg-surface-lowest p-3 shadow-card lg:flex-row lg:items-center">
-        <SearchInput value={keyword} onChange={setKeyword} placeholder="Cari nama keramik, kode SKU, atau pengrajin…" label="Cari produk" className="lg:flex-[1.3]" />
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:flex-[1.6]">
-          <FilterSelect label="Filter toko" value={toko} options={tokoOptions} onChange={setToko} />
-          <FilterSelect label="Filter kategori" value={kategoriAktif} options={kategoriSelectOptions} onChange={setKategoriAktif} />
-        </div>
+        <SearchInput
+          value={keyword}
+          onChange={setKeyword}
+          placeholder={modePengrajin ? "Cari nama karya atau kode SKU…" : "Cari nama keramik atau kode SKU…"}
+          label="Cari produk"
+          className="lg:flex-[1.6]"
+        />
+        {/* Filter kategori cukup lewat chip di bawah; dropdown toko hanya bila ada lebih dari satu toko. */}
+        {tampilFilterToko && (
+          <FilterSelect label="Filter toko" icon={<Store />} value={toko} options={tokoOptions} onChange={setToko} className="lg:max-w-72 lg:flex-1" />
+        )}
         <div className="flex items-center justify-between gap-3 lg:justify-end">
           <p className="text-xs whitespace-nowrap text-on-surface-variant">
             Menampilkan <strong className="text-on-surface">{filtered.length}</strong> karya
@@ -131,7 +146,20 @@ export function ProdukManager({ initialProduk, kategori, totalKoleksi }: ProdukM
 
       <section className="overflow-hidden rounded-2xl bg-surface-lowest shadow-card" aria-label="Daftar produk">
         {pageItems.length === 0 ? (
-          <EmptyState title="Produk tidak ditemukan" description="Ubah kata kunci atau pilih kategori lain." />
+          produkList.length === 0 ? (
+            <EmptyState
+              title={modePengrajin ? "Toko Anda belum punya produk" : "Katalog masih kosong"}
+              description="Tambahkan karya pertama beserta harga, stok, dan fotonya agar tampil di direktori."
+              action={
+                <ButtonLink href="/produk/tambah">
+                  <Plus className="size-4" aria-hidden />
+                  Tambah Produk
+                </ButtonLink>
+              }
+            />
+          ) : (
+            <EmptyState title="Produk tidak ditemukan" description="Ubah kata kunci atau pilih kategori lain." />
+          )
         ) : view === "list" ? (
           <ProdukTable rows={pageItems} onShare={handleShare} onDelete={setDeleteTarget} />
         ) : (

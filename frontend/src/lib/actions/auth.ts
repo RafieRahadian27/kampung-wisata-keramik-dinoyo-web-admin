@@ -17,8 +17,15 @@ export type RegisterResult =
  * datang dari server Next.js sehingga batas percobaan login/daftar berlaku untuk semua orang sekaligus.
  */
 async function jsonHeaders() {
-  const forwardedFor = (await headers()).get("x-forwarded-for");
-  return { "Content-Type": "application/json", ...(forwardedFor ? { "X-Forwarded-For": forwardedFor } : {}) };
+  const incoming = await headers();
+  const forwardedFor = incoming.get("x-forwarded-for");
+  // User-Agent browser asli → label perangkat di menu Profil & Keamanan (bukan "node" milik server Next.js).
+  const userAgent = incoming.get("user-agent");
+  return {
+    "Content-Type": "application/json",
+    ...(forwardedFor ? { "X-Forwarded-For": forwardedFor } : {}),
+    ...(userAgent ? { "User-Agent": userAgent.slice(0, 255) } : {}),
+  };
 }
 
 type LoginInput = LoginPayload & { next?: string };

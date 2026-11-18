@@ -175,3 +175,87 @@
     transform: none;
   }
 }
+
+/* ── Animasi popup & section ─────────────────────────────────────────────
+ * Hanya opacity + transform: dikerjakan GPU dan tidak menggeser tata letak (CLS tetap 0).
+ * Kelas: animate-overlay-in/out (latar dialog), animate-dialog-in/out (kartu dialog),
+ *        stagger-rise (anak-anak section muncul bergiliran saat halaman dibuka).
+ */
+@theme {
+  --animate-overlay-in: overlay-in 180ms ease-out both;
+  --animate-overlay-out: overlay-out 160ms ease-in both;
+  --animate-dialog-in: dialog-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-dialog-out: dialog-out 160ms ease-in both;
+  --animate-popover-in: popover-in 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  @keyframes overlay-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes overlay-out {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.96);
+    }
+  }
+  @keyframes dialog-out {
+    to {
+      opacity: 0;
+      transform: translateY(8px) scale(0.97);
+    }
+  }
+  @keyframes popover-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+    }
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+  }
+}
+
+/* Section halaman muncul bergiliran (60 ms per anak, maksimal 6 tingkat jeda). */
+@utility stagger-rise {
+  & > * {
+    animation: rise 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  & > :nth-child(2) {
+    animation-delay: 60ms;
+  }
+  & > :nth-child(3) {
+    animation-delay: 120ms;
+  }
+  & > :nth-child(4) {
+    animation-delay: 180ms;
+  }
+  & > :nth-child(5) {
+    animation-delay: 240ms;
+  }
+  & > :nth-child(n + 6) {
+    animation-delay: 300ms;
+  }
+}
+
+/* Pengguna yang meminta gerak minimal (pengaturan OS) tidak mendapat animasi apa pun.
+ * Durasi 1ms (bukan 0) agar event animationend tetap terpicu — Modal menunggunya untuk menutup. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}

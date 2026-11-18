@@ -8,7 +8,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/context/ToastContext";
 import { invalidateCache } from "@/lib/actions/cache";
 import { tokoApi } from "@/lib/api/client";
-import { CACHE_TAGS } from "@/lib/api/config";
+import { ApiError, CACHE_TAGS } from "@/lib/api/config";
+import { useNow } from "@/hooks/useNow";
 import { cn } from "@/lib/utils";
 import type { PengajuanToko } from "@/types";
 import { VerificationItem, type Keputusan } from "./VerificationItem";
@@ -29,6 +30,10 @@ export function VerificationPanel({ pengajuan, terakhirDisetujui, totalPendaftar
   const [items, setItems] = useState(pengajuan);
   const [busySlug, setBusySlug] = useState<string | null>(null);
   const [lastApproved, setLastApproved] = useState(terakhirDisetujui);
+  // Satu jam bersama untuk semua countdown; status kedaluwarsa juga berubah "live" saat batas lewat.
+  const now = useNow();
+  const isKedaluwarsa = (item: PengajuanToko) => item.status === "kedaluwarsa" || (now !== null && Date.parse(item.batasWaktu) <= now);
+  const jumlahMenunggu = items.filter((item) => !isKedaluwarsa(item)).length;
 
   const handleDecision = async (item: PengajuanToko, keputusan: Keputusan) => {
     setBusySlug(item.slug);
@@ -41,6 +46,10 @@ export function VerificationPanel({ pengajuan, terakhirDisetujui, totalPendaftar
       showToast(message, keputusan === "verifikasi" ? "success" : "info");
       await invalidateCache([CACHE_TAGS.dashboard, CACHE_TAGS.toko]);
     } catch (error) {
+      // Express menolak verifikasi pengajuan yang lewat batas → tandai juga di tampilan.
+      if (error instanceof ApiError && error.status === 409 && /batas verifikasi/i.test(error.message)) {
+        setItems((current) => current.map((entry) => (entry.slug === item.slug ? { ...entry, status: "kedaluwarsa" } : entry)));
+      }
       showToast(error instanceof Error ? error.message : "Gagal memproses pengajuan", "error");
     } finally {
       setBusySlug(null);
@@ -56,17 +65,24 @@ export function VerificationPanel({ pengajuan, terakhirDisetujui, totalPendaftar
             Persetujuan &amp; Verifikasi Toko
           </h2>
           <p className="mt-0.5 text-xs leading-[18px] text-on-surface-variant">
-            Pengrajin mengajukan pendaftaran direktori resmi Paguyuban Dinoyo
+            Pengrajin mengajukan pendaftaran direktori resmi Paguyuban Dinoyo • batas verifikasi 3×24 jam, lewat dari itu otomatis dinonaktifkan
           </p>
         </div>
         <Badge tone="primary" className="px-3 py-1">
-          {items.length} Menunggu Review
+          {jumlahMenunggu} Menunggu Review
         </Badge>
       </div>
 
       <ul className="flex flex-col gap-4 pt-2">
         {items.map((item) => (
-          <VerificationItem key={item.slug} item={item} isBusy={busySlug === item.slug} onDecision={handleDecision} />
+          <VerificationItem
+            key={item.slug}
+            item={item}
+            now={now}
+            kedaluwarsa={isKedaluwarsa(item)}
+            isBusy={busySlug === item.slug}
+            onDecision={handleDecision}
+          />
         ))}
         {items.length === 0 && (
           <li>
@@ -93,7 +109,7 @@ export function VerificationPanel({ pengajuan, terakhirDisetujui, totalPendaftar
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant/30 pt-4">
         <p className="text-xs leading-[18px] text-on-surface-variant">
-          Menampilkan {items.length} toko tertunda dari total {totalPendaftar} pendaftar tahun ini
+          Menampilkan {jumlahMenunggu} toko tertunda ({items.length - jumlahMenunggu} kedaluwarsa) dari total {totalPendaftar} pendaftar tahun ini
         </p>
         <Link href="/toko" className="inline-flex items-center gap-2 text-xs font-semibold text-primary hover:underline">
           Lihat Semua Riwayat Toko

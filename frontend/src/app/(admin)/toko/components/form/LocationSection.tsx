@@ -24,7 +24,7 @@ export function LocationSection({ values, errors, updateField }: LocationSection
         required
         options={wilayahOptions}
         value={values.wilayah}
-        onChange={(event) => updateField("wilayah", event.target.value)}
+        onValueChange={(wilayah) => updateField("wilayah", wilayah)}
         error={errors.wilayah}
       />
       <TextField

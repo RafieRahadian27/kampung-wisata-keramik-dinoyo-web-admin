@@ -1,8 +1,8 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select";
 
 export interface FilterOption {
   value: string;
@@ -18,27 +18,28 @@ interface FilterSelectProps {
   className?: string;
 }
 
-/** Dropdown filter bergaya "pill" dengan ikon di kiri dan chevron di kanan. */
+/** Radix Select tidak menerima value "" untuk item; opsi "Semua …" (value "") dipetakan ke penanda ini. */
+const SEMUA = "__semua__";
+
+/** Dropdown filter bergaya "pill" (komponen Select shadcn/ui) dengan ikon di kiri. */
 export function FilterSelect({ label, value, options, onChange, icon, className }: FilterSelectProps) {
   return (
-    <label className={cn("relative flex min-w-0 items-center", className)}>
-      <span className="sr-only">{label}</span>
-      {icon && <span className="pointer-events-none absolute left-4 text-on-surface-variant [&_svg]:size-4">{icon}</span>}
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className={cn(
-          "h-11 w-full min-w-0 cursor-pointer appearance-none truncate rounded-xl border border-outline-variant/40 bg-surface-lowest pr-10 text-sm font-semibold text-on-surface outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/15",
-          icon ? "pl-11" : "pl-4",
-        )}
-      >
+    <Select value={value === "" ? SEMUA : value} onValueChange={(next) => onChange(next === SEMUA ? "" : next)}>
+      <SelectTrigger aria-label={label} className={cn("border-outline-variant/40 bg-surface-lowest font-semibold", className)}>
+        <span className="flex min-w-0 items-center gap-3">
+          {icon && <span className="shrink-0 text-on-surface-variant [&_svg]:size-4">{icon}</span>}
+          <span className="min-w-0 truncate">
+            <SelectValue />
+          </span>
+        </span>
+      </SelectTrigger>
+      <SelectContent>
         {options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <SelectItem key={option.value || SEMUA} value={option.value || SEMUA}>
             {option.label}
-          </option>
+          </SelectItem>
         ))}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-3 size-4 text-on-surface-variant" aria-hidden />
-    </label>
+      </SelectContent>
+    </Select>
   );
 }

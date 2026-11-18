@@ -1,19 +1,8 @@
 "use client";
 
 import { Pencil, Share2, Trash2 } from "lucide-react";
-import type { BadgeTone } from "@/components/ui/Badge";
 import { useToast } from "@/context/ToastContext";
-import type { Produk, StatusProduk } from "@/types";
-
-export const STATUS_PRODUK_TONE: Record<StatusProduk, BadgeTone> = {
-  tersedia: "secondary",
-  habis: "error",
-  preorder: "tertiary",
-};
-
-export function produkBadgeTone(badge: string): BadgeTone {
-  return badge.toLowerCase().includes("best") ? "secondary" : "tertiary";
-}
+import type { Produk } from "@/types";
 
 interface ProdukActionsProps {
   produk: Produk;

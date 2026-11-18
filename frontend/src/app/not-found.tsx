@@ -1,5 +1,4 @@
 import { Compass } from "lucide-react";
-import { AuthGate } from "@/components/site/auth-gate";
 import { ButtonLink } from "@/components/ui/Button";
 
 export default function NotFound() {
@@ -14,10 +13,9 @@ export default function NotFound() {
         <p className="text-sm leading-[22px] text-on-surface-variant">
           Lorong yang Anda cari tidak ada di peta Kampung Keramik Dinoyo. Periksa kembali alamatnya atau kembali ke beranda panel.
         </p>
-        {/* Tamu diajak masuk dulu; pengguna yang sudah login langsung diarahkan ke beranda sesuai perannya. */}
-        <AuthGate title="Masuk ke panel pengelolaan" description="Masuk dengan akun admin paguyuban atau pengrajin untuk membuka panel.">
-          <ButtonLink href="/">Kembali ke Beranda</ButtonLink>
-        </AuthGate>
+        {/* Statis (tanpa membaca sesi) agar halaman 404 masuk cangkang prerender. "/" sendiri yang
+            mengarahkan: tamu → /login (proxy.ts), pengguna login → beranda sesuai perannya. */}
+        <ButtonLink href="/">Kembali ke Beranda</ButtonLink>
       </div>
     </main>
   );

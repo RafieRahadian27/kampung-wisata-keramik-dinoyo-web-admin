@@ -3,6 +3,7 @@
 import { CalendarDays, ChevronDown, Download, FileSpreadsheet, FileText, Printer } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { FilterSelect } from "@/components/ui/FilterSelect";
 import { useToast } from "@/context/ToastContext";
 import { cn } from "@/lib/utils";
 
@@ -44,20 +45,14 @@ export function ReportToolbar({ periode }: { periode: string }) {
 
   return (
     <div className="flex flex-wrap gap-3">
-      <label className="relative flex items-center">
-        <span className="sr-only">Periode laporan</span>
-        <CalendarDays className="pointer-events-none absolute left-4 size-4 text-on-surface-variant" aria-hidden />
-        <select
-          value={selectedPeriode}
-          onChange={(event) => setSelectedPeriode(event.target.value)}
-          className="h-11 cursor-pointer appearance-none rounded-xl bg-surface-high pr-10 pl-11 text-sm font-semibold text-on-surface outline-none focus:ring-2 focus:ring-primary/20"
-        >
-          {PERIODE_OPTIONS.map((option) => (
-            <option key={option}>{option}</option>
-          ))}
-        </select>
-        <ChevronDown className="pointer-events-none absolute right-3 size-4 text-on-surface-variant" aria-hidden />
-      </label>
+      <FilterSelect
+        label="Periode laporan"
+        icon={<CalendarDays />}
+        value={selectedPeriode}
+        options={[...new Set([periode, ...PERIODE_OPTIONS])].map((option) => ({ value: option, label: option }))}
+        onChange={setSelectedPeriode}
+        className="w-auto min-w-60 bg-surface-high"
+      />
 
       <div ref={menuRef} className="relative">
         <Button onClick={() => setMenuOpen((open) => !open)} aria-haspopup="menu" aria-expanded={isMenuOpen} className="h-11">
