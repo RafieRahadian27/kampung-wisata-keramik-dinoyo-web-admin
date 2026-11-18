@@ -1,4 +1,5 @@
-import { EMAIL, EMAIL_MAX, NAMA_ORANG, NIK, USERNAME, WHATSAPP_ID } from "../lib/validate";
+import { EMAIL, EMAIL_MAX, NAMA_ORANG, NAMA_PRODUK, NIK, USERNAME, WHATSAPP_ID } from "../lib/validate";
+import { TEKNIK_PEMBUATAN } from "../models";
 import { PASSWORD_MAX, PASSWORD_MIN, validatePassword } from "../lib/validatePassword";
 import type { Schema } from "../utils/schema";
 
@@ -41,7 +42,8 @@ const KOORDINAT = /^-?\d{1,2}(\.\d+)?,\s*-?\d{1,3}(\.\d+)?$/;
 /** Untuk POST. PUT memakai skema yang sama dalam mode parsial. */
 export const tokoSchema: Schema = {
   nama: { type: "string", label: "Nama toko", required: true, min: 3, max: 60 },
-  pemilik: { type: "string", label: "Nama pemilik", required: true, max: 100 },
+  // Nama pengrajin: hanya huruf (+ spasi, titik untuk gelar "H." / "Bpk.", petik, tanda hubung). Angka & simbol ditolak.
+  pemilik: { type: "string", label: "Nama pengrajin", required: true, min: 3, max: 100, pattern: NAMA_ORANG, patternMessage: "Nama pengrajin hanya boleh berisi huruf, spasi, titik, petik, atau tanda hubung" },
   tahunBerdiri: { type: "number", label: "Tahun berdiri", required: true, integer: true, min: 1900, max: () => new Date().getFullYear() },
   kategori: { type: "array", label: "Kategori", maxItems: 8, itemMax: 60, default: [] },
   deskripsi: { type: "string", label: "Deskripsi", max: 2000, default: "" },
@@ -79,4 +81,50 @@ export const akunStatusSchema: Schema = {
 
 export const keputusanSchema: Schema = {
   keputusan: { type: "string", label: "Keputusan", required: true, enum: ["verifikasi", "tolak"] },
+};
+
+/** Produk baru. Kategori dicek ulang terhadap tabel master `kategori_produk` di service. */
+export const produkSchema: Schema = {
+  tokoSlug: { type: "string", label: "Toko", required: true, max: 80 },
+  nama: { type: "string", label: "Nama produk", required: true, min: 3, max: 120, pattern: NAMA_PRODUK, patternMessage: "Nama produk hanya boleh berisi huruf, angka, spasi, dan tanda baca sederhana (. , - & ( ) / ')" },
+  kategori: { type: "string", label: "Kategori", required: true, max: 60 },
+  // Daftar tertutup (models/produk.model.ts) — sama dengan pilihan dropdown di form produk.
+  teknik: { type: "string", label: "Teknik pembuatan", required: true, enum: TEKNIK_PEMBUATAN },
+  bahan: { type: "string", label: "Bahan", required: true, min: 3, max: 80, pattern: NAMA_PRODUK, patternMessage: "Bahan hanya boleh berisi huruf, angka, spasi, dan tanda baca sederhana" },
+  harga: { type: "number", label: "Harga", required: true, integer: true, min: 1000, max: 100_000_000 },
+  catatanHarga: { type: "string", label: "Catatan harga", max: 80, default: "" },
+  status: { type: "string", label: "Status stok", required: true, enum: ["tersedia", "habis", "preorder"] },
+  stok: { type: "number", label: "Jumlah stok", integer: true, min: 0, max: 100_000, default: 0 },
+  lokasiStok: { type: "string", label: "Lokasi stok", required: true, min: 2, max: 80 },
+  badge: { type: "string", label: "Label", max: 40, default: "" },
+};
+
+/** Ganti kata sandi: sandi baru mengikuti aturan pendaftaran dan harus berbeda dari yang lama. */
+export const passwordSchema: Schema = {
+  passwordLama: { type: "string", label: "Kata sandi saat ini", required: true, max: 200 },
+  passwordBaru: {
+    type: "string",
+    label: "Kata sandi baru",
+    required: true,
+    min: PASSWORD_MIN,
+    max: PASSWORD_MAX,
+    check: (password, input) => (password === input.passwordLama ? "Kata sandi baru harus berbeda dari kata sandi saat ini" : undefined),
+  },
+};
+
+export const laporanTokoQuerySchema: Schema = {
+  periode: { type: "string", label: "Periode", enum: ["7", "30", "90"], default: "30" },
+};
+
+/** Nama tampilan (sapaan) di panel. Nama lengkap, NIK, dan kontak tetap diubah lewat admin. */
+export const profilSchema: Schema = {
+  sapaan: {
+    type: "string",
+    label: "Nama tampilan",
+    required: true,
+    min: 3,
+    max: 60,
+    pattern: NAMA_ORANG,
+    patternMessage: "Nama tampilan hanya boleh berisi huruf, spasi, titik, atau tanda petik",
+  },
 };

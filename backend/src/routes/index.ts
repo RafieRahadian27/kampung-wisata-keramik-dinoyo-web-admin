@@ -2,11 +2,14 @@ import { Router } from "express";
 import { HttpError } from "../utils/httpError";
 import akunRoutes from "./akun.routes";
 import authRoutes from "./auth.routes";
+import gambarRoutes from "./gambar.routes";
 import pengajuanRoutes from "./pengajuan.routes";
+import { berandaRouter, laporanTokoRouter } from "./pengrajin.routes";
 import produkRoutes from "./produk.routes";
 import { dashboardRouter, laporanRouter } from "./report.routes";
 import systemRoutes from "./system.routes";
 import tokoRoutes from "./toko.routes";
+import vitalsRoutes from "./vitals.routes";
 
 /**
  * Routing modular: setiap fitur punya file router sendiri (express.Router())
@@ -21,10 +24,14 @@ router.use("/health", systemRoutes);
 router.use("/auth", authRoutes);
 router.use("/dashboard", dashboardRouter);
 router.use("/laporan", laporanRouter);
+router.use("/beranda", berandaRouter);
+router.use("/laporan-toko", laporanTokoRouter);
 router.use("/toko", tokoRoutes);
 router.use("/pengajuan", pengajuanRoutes);
 router.use("/produk", produkRoutes);
 router.use("/akun", akunRoutes);
+router.use("/vitals", vitalsRoutes);
+router.use("/gambar", gambarRoutes);
 
 /**
  * Wildcard `/*splat` menangkap semua sisa path di bawah /api yang tidak cocok dengan rute mana pun.

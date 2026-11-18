@@ -153,7 +153,14 @@ export const tokoSeed: Toko[] = [
   },
 ];
 
-/** Pengajuan toko baru yang tampil di panel verifikasi dashboard. */
+const JAM = 60 * 60 * 1000;
+/** Waktu pengajuan relatif terhadap saat seed dijalankan, agar timer 3×24 jam selalu bisa didemokan. */
+const jamLalu = (jam: number) => new Date(Date.now() - jam * JAM);
+
+/**
+ * Pengajuan toko baru yang tampil di panel verifikasi dashboard. Sengaja dibuat bervariasi:
+ * baru masuk, sisa ±2 hari, hampir habis (sisa 3 jam), dan sudah kedaluwarsa (lewat 72 jam).
+ */
 export const pengajuanSeed = [
   {
     slug: "gerabah-lestari-pak-man",
@@ -162,6 +169,7 @@ export const pengajuanSeed = [
     pengrajin: "Bpk. Suparman",
     keahlian: "Vas & Guci Putar",
     diajukan: "Diajukan 2 jam yang lalu",
+    diajukanPada: jamLalu(2),
     foto: "/images/verif-gerabah-lestari.jpg",
   },
   {
@@ -171,6 +179,29 @@ export const pengajuanSeed = [
     pengrajin: "Ibu Rini Handayani",
     keahlian: "Stoneware Glazing",
     diajukan: "Diajukan kemarin, 16:30",
+    diajukanPada: jamLalu(20),
     foto: "/images/verif-studio-tanah-sari.jpg",
+  },
+  {
+    slug: "kriya-tanah-liat-arjosari",
+    nama: "Kriya Tanah Liat Arjosari",
+    lokasiGang: "Gang 6 No. 03",
+    pengrajin: "Bpk. Hendro Wibowo",
+    keahlian: "Ukir Terakota",
+    diajukan: "Diajukan 3 hari yang lalu",
+    diajukanPada: jamLalu(69),
+    foto: "/images/toko-rumah-kriya.jpg",
+  },
+  {
+    slug: "keramik-cahaya-merjosari",
+    nama: "Keramik Cahaya Merjosari",
+    lokasiGang: "Gang 1 No. 21",
+    pengrajin: "Ibu Siti Aminah",
+    keahlian: "Suvenir Cetak",
+    diajukan: "Diajukan 4 hari yang lalu",
+    diajukanPada: jamLalu(98),
+    // Lewat 72 jam: seed langsung menandainya agar konsisten dengan aturan batas waktu.
+    status: "kedaluwarsa" as const,
+    foto: "/images/toko-suvenir-melati.jpg",
   },
 ];

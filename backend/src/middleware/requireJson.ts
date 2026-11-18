@@ -7,7 +7,7 @@ const METHODS_WITH_BODY = new Set(["POST", "PUT", "PATCH"]);
  * Rute unggah berkas yang membaca body biner dengan parser sendiri (lihat middleware/upload.ts).
  * Hanya rute di daftar ini yang dikecualikan; tipe & isi berkasnya diperiksa di rute tersebut.
  */
-const UPLOAD_ROUTES = [/^\/api\/toko\/[^/]+\/(?:foto|stempel)\/?$/];
+const UPLOAD_ROUTES = [/^\/api\/toko\/[^/]+\/(?:foto|stempel)\/?$/, /^\/api\/produk\/\d+\/foto\/?$/];
 
 /**
  * Tolak body non-JSON pada POST/PUT/PATCH dengan 415, alih-alih diam-diam

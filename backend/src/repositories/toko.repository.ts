@@ -56,6 +56,11 @@ export const tokoRepository = {
     return toko;
   },
 
+  /** Data toko yang dibutuhkan untuk menyalin label pemilik ke baris produk baru. */
+  async findLabelForProduk(db: Db, id: number) {
+    return db.toko.findUnique({ where: { id }, select: { nama: true, pemilik: true } });
+  },
+
   async ringkasan(db: Db, user: AdminUser) {
     // GROUP BY status → satu query menghasilkan jumlah per status sekaligus total produk.
     const groups = await db.toko.groupBy({ by: ["status"], where: tokoScope(user), _count: { _all: true }, _sum: { jumlahProduk: true } });

@@ -2,6 +2,7 @@ import type { CookieOptions, Request, Response } from "express";
 import { env } from "../config/env";
 import { currentUser } from "../middleware/authMiddleware";
 import { authService, type RegisterInput } from "../services/auth.service";
+import { profilService } from "../services/profil.service";
 
 /**
  * Atribut cookie sesi:
@@ -43,6 +44,26 @@ export const authController = {
 
   me(req: Request, res: Response) {
     res.success(currentUser(req));
+  },
+
+  async profil(req: Request, res: Response) {
+    res.success(await profilService.detail(currentUser(req), req.auth!.token));
+  },
+
+  async ubahProfil(req: Request, res: Response) {
+    const { sapaan } = req.validated.body as { sapaan: string };
+    res.success(await profilService.ubahSapaan(currentUser(req), sapaan), { message: "Nama tampilan berhasil diperbarui" });
+  },
+
+  async gantiPassword(req: Request, res: Response) {
+    const body = req.validated.body as { passwordLama: string; passwordBaru: string };
+    const result = await profilService.gantiPassword(currentUser(req), req.auth!.token, body);
+    res.success(result, { message: "Kata sandi berhasil diperbarui" });
+  },
+
+  async cabutSesiLain(req: Request, res: Response) {
+    const result = await profilService.cabutSesiLain(currentUser(req), req.auth!.token);
+    res.success(result, { message: result.sesiDicabut > 0 ? `${result.sesiDicabut} sesi lain telah dikeluarkan` : "Tidak ada sesi lain yang aktif" });
   },
 
   async logout(req: Request, res: Response) {

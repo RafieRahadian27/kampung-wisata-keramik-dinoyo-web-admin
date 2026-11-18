@@ -65,17 +65,62 @@ export const produkRepository = {
 
   async ringkasan(db: Db, user: AdminUser) {
     const where = scoped(user);
-    const [totalKoleksi, perToko, stokTersedia, preOrder] = await Promise.all([
+    const [totalKoleksi, perToko, stokTersedia, preOrder, habis] = await Promise.all([
       db.produk.count({ where }),
       db.produk.groupBy({ by: ["tokoId"], where }),
       db.produk.count({ where: { ...where, status: "tersedia" } }),
       db.produk.count({ where: { ...where, status: "preorder" } }),
+      db.produk.count({ where: { ...where, status: "habis" } }),
     ]);
-    return { totalKoleksi, pengrajin: perToko.length, stokTersedia, preOrder, suhuBakar: "1.240°C" };
+    return { totalKoleksi, pengrajin: perToko.length, stokTersedia, preOrder, habis, suhuBakar: "1.240°C" };
+  },
+
+  async findById(db: Db, user: AdminUser, id: number): Promise<Produk | undefined> {
+    const row = await db.produk.findFirst({ where: { id, ...scoped(user) }, include: PRODUK_INCLUDE });
+    return row ? toProduk(row) : undefined;
+  },
+
+  /** Produk terbaru (ID terbesar) dalam cakupan pengguna — dipakai Dashboard Toko. */
+  async latest(db: Db, user: AdminUser, take = 5): Promise<Produk[]> {
+    const rows = await db.produk.findMany({ where: scoped(user), include: PRODUK_INCLUDE, orderBy: { id: "desc" }, take });
+    return rows.map(toProduk);
+  },
+
+  /**
+   * Statistik harga per kategori dari SELURUH sentra (agregat, tanpa data per toko) — acuan
+   * harga saat menambah produk. Sengaja tidak memakai ABAC karena hanya angka ringkasan pasar.
+   */
+  async hargaPasar(db: Db) {
+    const rows = await db.produk.groupBy({ by: ["kategori"], _count: { _all: true }, _min: { harga: true }, _max: { harga: true }, _avg: { harga: true } });
+    return rows.map((row) => ({
+      kategori: row.kategori,
+      jumlah: row._count._all,
+      termurah: row._min.harga ?? 0,
+      termahal: row._max.harga ?? 0,
+      rataRata: Math.round(row._avg.harga ?? 0),
+    }));
+  },
+
+  async kategoriExists(db: Db, nama: string) {
+    return (await db.kategoriProduk.count({ where: { nama } })) > 0;
+  },
+
+  /** SKU sementara harus unik; `insert` lalu `setSku` mengganti dengan SKU final berbasis ID. */
+  async insert(db: Db, data: Omit<Prisma.ProdukUncheckedCreateInput, "id">) {
+    const row = await db.produk.create({ data, select: { id: true } });
+    return row.id;
+  },
+
+  async setSku(db: Db, id: number, sku: string) {
+    await db.produk.update({ where: { id }, data: { sku } });
+  },
+
+  async setFoto(db: Db, id: number, foto: string) {
+    await db.produk.update({ where: { id }, data: { foto } });
   },
 
   async lockById(tx: Prisma.TransactionClient, user: AdminUser, id: number) {
-    const produk = await tx.produk.findFirst({ where: { id, ...scoped(user) }, select: { id: true, nama: true, tokoId: true } });
+    const produk = await tx.produk.findFirst({ where: { id, ...scoped(user) }, select: { id: true, nama: true, tokoId: true, foto: true } });
     if (!produk || !(await lockRow(tx, "produk", produk.id))) return undefined;
     return produk;
   },

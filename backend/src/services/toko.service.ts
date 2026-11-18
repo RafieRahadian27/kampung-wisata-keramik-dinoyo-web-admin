@@ -2,6 +2,8 @@ import { IMAGE_EXTENSION } from "../lib/fileType";
 import { isDuplicateEntry, prisma, withTransaction } from "../lib/prisma";
 import { storage } from "../lib/storage";
 import { auditRepository } from "../repositories/audit.repository";
+import { gambarRepository } from "../repositories/gambar.repository";
+import { JENIS_GAMBAR_TOKO } from "../models";
 import { type TokoFilter, tokoRepository } from "../repositories/toko.repository";
 import type { AdminUser, Toko, TokoInput } from "../types";
 import type { UploadedFile } from "../types/express";
@@ -103,6 +105,17 @@ export const tokoService = {
         const toko = await tokoRepository.lockBySlug(tx, user, slug);
         if (!toko) throw notFound(slug);
         await tokoRepository.update(tx, toko.id, { [kolom]: uploaded.url });
+        // Catatan berkas di tabel gambar: yang lama dilepas, yang baru dicatat — satu transaksi dengan kolom toko.
+        await gambarRepository.removeByUrl(tx, toko[kolom]);
+        await gambarRepository.insert(tx, {
+          url: uploaded.url,
+          pathname: uploaded.pathname,
+          contentType: file.contentType,
+          ukuran: file.size,
+          jenis: JENIS_GAMBAR_TOKO[jenis],
+          tokoId: toko.id,
+          diunggahOleh: user.id,
+        });
         await auditRepository.insert(tx, {
           userId: user.id,
           aksi: `toko:${jenis}`,

@@ -49,6 +49,12 @@ export const sessionStore = {
     return result.count;
   },
 
+  /** Cabut semua sesi pengguna KECUALI sesi yang sedang dipakai (ganti sandi / keluar dari perangkat lain). */
+  async revokeOthers(db: Db, userId: number, keepTokenHash: string) {
+    const result = await db.session.deleteMany({ where: { userId, tokenHash: { not: keepTokenHash } } });
+    return result.count;
+  },
+
   /** Bersihkan sesi kedaluwarsa agar tabel tidak terus membesar. */
   async purgeExpired() {
     await prisma.session.deleteMany({ where: { expiresAt: { lte: new Date() } } });

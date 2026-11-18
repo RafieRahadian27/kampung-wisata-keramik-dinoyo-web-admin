@@ -78,6 +78,45 @@ export const userRepository = {
     return users.map((user) => ({ id: user.id, jumlahToko: user._count.toko }));
   },
 
+  /** Profil pengguna sendiri (halaman Profil & Keamanan) — tanpa hash kata sandi. */
+  async findProfil(id: number) {
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        nama: true,
+        sapaan: true,
+        email: true,
+        username: true,
+        lastLoginAt: true,
+        akun: { select: { nik: true, whatsapp: true, toko: true, lokasi: true, peran: true, status: true } },
+        toko: { select: { toko: { select: { slug: true, nama: true } } }, orderBy: { tokoId: "asc" } },
+      },
+    });
+    if (!user) return undefined;
+    return { ...user, toko: user.toko.map((item) => item.toko) };
+  },
+
+  /** Hash + identitas untuk verifikasi & aturan kekuatan kata sandi baru. */
+  async findPasswordContext(id: number) {
+    return (await prisma.user.findUnique({ where: { id }, select: { passwordHash: true, username: true, email: true } })) ?? undefined;
+  },
+
+  async updateSapaan(db: Db, id: number, sapaan: string) {
+    await db.user.update({ where: { id }, data: { sapaan } });
+  },
+
+  async updatePassword(db: Db, id: number, passwordHash: string) {
+    await db.user.update({ where: { id }, data: { passwordHash } });
+  },
+
+  async listSessions(userId: number, now: Date) {
+    return prisma.session.findMany({
+      where: { userId, expiresAt: { gt: now } },
+      orderBy: { createdAt: "desc" },
+      select: { tokenHash: true, createdAt: true, expiresAt: true, ipAddress: true, userAgent: true },
+    });
+  },
+
   async touchLastLogin(db: Db, id: number, at: Date) {
     await db.user.update({ where: { id }, data: { lastLoginAt: at } });
   },

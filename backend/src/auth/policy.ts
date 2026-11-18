@@ -18,11 +18,22 @@ const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     "toko:delete",
     "pengajuan:decide",
     "produk:read",
+    "produk:create",
     "produk:delete",
     "akun:read",
     "akun:update",
+    "profil:update",
   ],
-  pengrajin: ["toko:read", "toko:update", "produk:read", "produk:delete"],
+  pengrajin: [
+    "beranda:read",
+    "toko:read",
+    "toko:update",
+    "produk:read",
+    "produk:create",
+    "produk:delete",
+    "laporan-toko:read",
+    "profil:update",
+  ],
 };
 
 export const ROLE_LABEL: Record<Role, string> = {

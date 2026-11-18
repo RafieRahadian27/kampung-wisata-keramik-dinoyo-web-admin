@@ -8,6 +8,7 @@ import { detectImageType } from "../src/lib/fileType";
 import { prisma } from "../src/lib/prisma";
 import { storage } from "../src/lib/storage";
 import { auditRepository } from "../src/repositories/audit.repository";
+import { gambarRepository } from "../src/repositories/gambar.repository";
 import { tokoRepository } from "../src/repositories/toko.repository";
 import { tokoService } from "../src/services/toko.service";
 import type { Toko } from "../src/types";
@@ -108,14 +109,28 @@ describe("tokoService.updateMedia: simpan ke storage → catat referensi", () =>
       if (gagalSimpan) throw new Error("koneksi database putus");
     });
     const audit = mock.method(auditRepository, "insert", async () => undefined);
+    const catatGambar = mock.method(gambarRepository, "insert", async () => 1);
+    const lepasGambar = mock.method(gambarRepository, "removeByUrl", async () => undefined);
     const upload = mock.method(storage, "upload", async () => ({ url: URL_BARU, pathname: "toko/toko-uji/sampul-Xy12.png" }));
     const remove = mock.method(storage, "remove", async () => undefined);
-    return { update, audit, upload, remove };
+    return { update, audit, upload, remove, catatGambar, lepasGambar };
   }
 
   it("URL Blob dicatat di toko.foto + audit, lalu berkas lama dihapus", async () => {
-    const { update, audit, upload, remove } = arrange();
+    const { update, audit, upload, remove, catatGambar, lepasGambar } = arrange();
     await tokoService.updateMedia(fakeUser("admin"), "toko-uji", "foto", file);
+
+    // Tabel gambar: catatan foto lama dilepas, unggahan baru dicatat beserta metadata & pemiliknya.
+    assert.equal(lepasGambar.mock.calls[0].arguments[1], URL_LAMA);
+    assert.deepEqual(catatGambar.mock.calls[0].arguments[1], {
+      url: URL_BARU,
+      pathname: "toko/toko-uji/sampul-Xy12.png",
+      contentType: "image/png",
+      ukuran: PNG_1PX.length,
+      jenis: "toko_foto",
+      tokoId: 7,
+      diunggahOleh: fakeUser("admin").id,
+    });
 
     assert.equal(upload.mock.calls[0].arguments[0], "toko/toko-uji/sampul.png");
     assert.deepEqual(update.mock.calls[0].arguments[2], { foto: URL_BARU });

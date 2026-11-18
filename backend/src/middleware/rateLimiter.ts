@@ -137,6 +137,19 @@ export const loginIpLimiter = rateLimit({
   message: (menit) => `Terlalu banyak percobaan login dari jaringan ini. Coba lagi dalam ${menit} menit.`,
 });
 
+/**
+ * Ganti kata sandi gagal per pengguna: 5 kali per 15 menit — mencegah sesi yang dibajak
+ * dipakai menebak kata sandi lama. Penggantian berhasil mereset hitungan.
+ */
+export const passwordLimiter = rateLimit({
+  windowMs: 15 * MINUTE,
+  max: 5,
+  key: (req) => `user:${req.user?.id ?? clientIp(req)}`,
+  count: "failed",
+  resetOnSuccess: true,
+  message: (menit) => `Terlalu banyak percobaan mengganti kata sandi. Coba lagi dalam ${menit} menit.`,
+});
+
 /** Pendaftaran berhasil per IP: 5 akun per jam, agar endpoint publik tidak dipakai membanjiri tabel akun. */
 export const registerLimiter = rateLimit({
   windowMs: 60 * MINUTE,

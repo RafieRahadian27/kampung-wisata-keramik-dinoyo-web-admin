@@ -99,6 +99,7 @@ model User {
   toko     UserToko[]
   sessions Session[]
   audit    AuditLog[]
+  gambar   Gambar[]
 
   @@index([akunId], map: "fk_users_akun")
   @@map("users")
@@ -134,6 +135,7 @@ model Toko {
   /// Pengguna yang memiliki toko ini (dasar ABAC).
   pengguna UserToko[]
   produk   Produk[]
+  gambar   Gambar[]
 
   @@index([status], map: "idx_toko_status")
   @@index([diperbarui], map: "idx_toko_diperbarui")
@@ -195,6 +197,7 @@ model Produk {
 
   toko           Toko           @relation(fields: [tokoId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_produk_toko")
   kategoriProduk KategoriProduk @relation(fields: [kategori], references: [nama], onDelete: Restrict, onUpdate: Cascade, map: "fk_produk_kategori")
+  gambar         Gambar[]
 
   @@index([tokoId], map: "fk_produk_toko")
   @@index([kategori], map: "fk_produk_kategori")
@@ -203,16 +206,59 @@ model Produk {
 
 /// Pengajuan pendaftaran toko baru (panel verifikasi dashboard).
 model Pengajuan {
-  id         Int    @id @default(autoincrement()) @db.UnsignedInt
-  slug       String @unique(map: "slug") @db.VarChar(80)
-  nama       String @db.VarChar(60)
-  lokasiGang String @map("lokasi_gang") @db.VarChar(60)
-  pengrajin  String @db.VarChar(100)
-  keahlian   String @db.VarChar(80)
-  diajukan   String @db.VarChar(60)
-  foto       String @db.VarChar(200)
+  id           Int             @id @default(autoincrement()) @db.UnsignedInt
+  slug         String          @unique(map: "slug") @db.VarChar(80)
+  nama         String          @db.VarChar(60)
+  lokasiGang   String          @map("lokasi_gang") @db.VarChar(60)
+  pengrajin    String          @db.VarChar(100)
+  keahlian     String          @db.VarChar(80)
+  /// Label lama ("Diajukan 2 jam yang lalu"). Tampilan kini dihitung dari `diajukanPada`.
+  diajukan     String          @db.VarChar(60)
+  foto         String          @db.VarChar(200)
+  /// Waktu pengajuan masuk — awal hitung mundur batas verifikasi 3×24 jam (migrasi 20261118000000).
+  diajukanPada DateTime        @default(now()) @map("diajukan_pada") @db.DateTime(0)
+  /// `kedaluwarsa` = lewat batas tanpa keputusan admin → tidak bisa diverifikasi lagi.
+  status       StatusPengajuan @default(menunggu)
 
+  @@index([status, diajukanPada], map: "idx_pengajuan_status")
   @@map("pengajuan")
+}
+
+enum StatusPengajuan {
+  menunggu
+  kedaluwarsa
+}
+
+enum JenisGambar {
+  toko_foto
+  toko_stempel
+  produk_foto
+}
+
+/// Catatan setiap berkas gambar di Vercel Blob (migrasi 20261118000000).
+/// Berkasnya tetap di Blob; tabel ini menyimpan metadata + pemiliknya, sehingga database tahu
+/// berkas mana yang dipakai toko/produk mana, ukurannya, dan siapa yang mengunggah.
+/// Baris ikut terhapus (CASCADE) bila toko/produknya dihapus; berkas Blob-nya dihapus service.
+model Gambar {
+  id           Int         @id @default(autoincrement()) @db.UnsignedInt
+  url          String      @unique(map: "uq_gambar_url") @db.VarChar(255)
+  pathname     String      @db.VarChar(255)
+  contentType  String      @map("content_type") @db.VarChar(40)
+  ukuran       Int         @db.UnsignedInt
+  jenis        JenisGambar
+  tokoId       Int?        @map("toko_id") @db.UnsignedInt
+  produkId     Int?        @map("produk_id") @db.UnsignedInt
+  diunggahOleh Int?        @map("diunggah_oleh") @db.UnsignedInt
+  dibuat       DateTime    @default(now()) @db.DateTime(0)
+
+  toko       Toko?   @relation(fields: [tokoId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_gambar_toko")
+  produk     Produk? @relation(fields: [produkId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_gambar_produk")
+  pengunggah User?   @relation(fields: [diunggahOleh], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_gambar_user")
+
+  @@index([tokoId], map: "fk_gambar_toko")
+  @@index([produkId], map: "fk_gambar_produk")
+  @@index([diunggahOleh], map: "fk_gambar_user")
+  @@map("gambar")
 }
 
 /// Sesi login. Yang disimpan hanya SHA-256 dari token (bukan token aslinya).

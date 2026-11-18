@@ -1,3 +1,4 @@
+import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
@@ -20,6 +21,7 @@ import apiRouter from "./routes";
  *   1. request ID + request logger  → paling awal, agar request yang ditolak pos berikutnya pun tercatat
  *   2. Helmet (header keamanan)
  *   3. rate limiter umum            → 429
+ *   3b. kompresi response (gzip/deflate/br sesuai Accept-Encoding)
  *   4. CORS, cookie, parser body
  *   5. routes
  *   6. handler 404 → error handler  → paling akhir
@@ -41,6 +43,11 @@ export function createApp() {
 
   // ── 3. Rate limit umum per IP ──
   app.use(apiLimiter);
+
+  // ── 3b. Kompresi: JSON daftar toko/produk/laporan menyusut ±70–80% sebelum dikirim ke Next.js.
+  // Response < 1 KB dilewati (default `threshold`) karena overhead kompresinya lebih besar dari hematnya.
+  // Untuk trafik tinggi, kompresi sebaiknya dipindah ke reverse proxy (Nginx) agar tidak memakan CPU Node.
+  app.use(compression());
 
   // ── 4. Augmentasi request/response, CORS, cookie, parser body ──
   app.use(normalizeHeaders);

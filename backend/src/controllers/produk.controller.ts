@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { currentUser } from "../middleware/authMiddleware";
-import { type ProdukFilter, produkService } from "../services/produk.service";
+import { type ProdukFilter, type ProdukInput, produkService } from "../services/produk.service";
 
 export const produkController = {
   async list(req: Request, res: Response) {
@@ -13,7 +13,21 @@ export const produkController = {
     res.success(data, { meta: { total: data.length, kategori, ringkasan } });
   },
 
+  async hargaPasar(_req: Request, res: Response) {
+    res.success(await produkService.hargaPasar());
+  },
+
+  async create(req: Request, res: Response) {
+    const produk = await produkService.create(currentUser(req), req.validated.body as unknown as ProdukInput);
+    res.success(produk, { status: 201, message: `Produk "${produk.nama}" berhasil ditambahkan ke katalog` });
+  },
+
   /** `req.params.id` sudah berupa angka positif — dijamin oleh `router.param("id")`. */
+  async uploadFoto(req: Request, res: Response) {
+    const produk = await produkService.updateFoto(currentUser(req), Number(req.params.id), req.file!);
+    res.success(produk, { message: "Foto produk berhasil diunggah" });
+  },
+
   async remove(req: Request, res: Response) {
     await produkService.remove(currentUser(req), Number(req.params.id));
     res.success(null, { message: "Produk berhasil dihapus dari katalog" });

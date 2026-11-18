@@ -24,6 +24,8 @@ async function main() {
   await prisma.$transaction(
     async (tx) => {
       // Urutan hapus mengikuti foreign key: tabel anak dulu, baru induknya.
+      // Catatan gambar ikut dikosongkan; berkas di Vercel Blob tidak disentuh seed.
+      await tx.gambar.deleteMany();
       await tx.auditLog.deleteMany();
       await tx.session.deleteMany();
       await tx.userToko.deleteMany();

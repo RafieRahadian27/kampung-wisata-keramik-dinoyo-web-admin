@@ -13,6 +13,7 @@ const PERAN_FROM_DB: Record<PeranDb, PeranAkun> = {
 };
 
 export const peranToDb = (peran: PeranAkun) => PERAN_TO_DB[peran];
+export const peranFromDb = (peran: PeranDb) => PERAN_FROM_DB[peran];
 
 const toAkun = ({ peran, tone, ...row }: AkunRow): Akun => ({ ...row, peran: PERAN_FROM_DB[peran], tone: tone as Akun["tone"] });
 

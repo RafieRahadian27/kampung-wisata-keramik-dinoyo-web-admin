@@ -1,6 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { auditRepository } from "../repositories/audit.repository";
-import { pengajuanRepository } from "../repositories/pengajuan.repository";
+import { pengajuanService } from "./pengajuan.service";
 import { produkRepository } from "../repositories/produk.repository";
 import { tokoRepository } from "../repositories/toko.repository";
 import type { AdminUser } from "../types";
@@ -21,7 +21,7 @@ export const dashboardService = {
       produkRepository.ringkasan(prisma, admin),
       produkRepository.kategori(prisma, admin),
       akunService.ringkasan(),
-      pengajuanRepository.findAll(prisma),
+      pengajuanService.findAll(),
       auditRepository.latest(prisma, "pengajuan:verifikasi"),
     ]);
 
@@ -29,7 +29,7 @@ export const dashboardService = {
       admin,
       tanggal: formatTanggal(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
       statistik: {
-        toko: { nilai: toko.total, catatan: `${toko.menunggu} menunggu verifikasi berkas`, lencana: `+${pengajuan.length} baru` },
+        toko: { nilai: toko.total, catatan: `${toko.menunggu} menunggu verifikasi berkas`, lencana: `+${pengajuan.filter((p) => p.status === "menunggu").length} baru` },
         produk: {
           nilai: produk.totalKoleksi,
           catatan: `Tersebar di ${kategori.length} kategori utama (${kategori.map((k) => k.nama).join(", ")})`,
