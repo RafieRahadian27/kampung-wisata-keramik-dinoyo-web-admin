@@ -25,9 +25,11 @@ menjadi aplikasi **Next.js 16 (App Router)** yang terhubung ke REST API **Expres
 7. [Auth, Form Validation & Prisma](#auth-form-validation--prisma)
 8. [File Upload & Cloud Storage (Vercel Blob)](#file-upload--cloud-storage-vercel-blob)
 9. [Keamanan, Error & Logging](#keamanan-error--logging)
-10. [Pemetaan Kriteria Penilaian](#pemetaan-kriteria-penilaian)
-11. [Responsif](#responsif)
-12. [Screenshot](#screenshot)
+10. [Performa, SEO & Advanced Rendering (Pertemuan 14)](#performa-seo--advanced-rendering-pertemuan-14)
+11. [Timer Pengajuan, Peta Lorong, Validasi & Lapisan Models](#timer-pengajuan-peta-lorong-validasi--lapisan-models)
+12. [Pemetaan Kriteria Penilaian](#pemetaan-kriteria-penilaian)
+13. [Responsif](#responsif)
+14. [Screenshot](#screenshot)
 
 ---
 
@@ -95,6 +97,7 @@ Buka <http://localhost:3000>. Anda akan diarahkan ke halaman login.
 | --- | --- | --- |
 | `frontend` | `npm run build && npm start` | Build & jalankan mode produksi |
 | `frontend` | `npm run lint` | Pemeriksaan ESLint |
+| `frontend` | `npm run analyze` / `npm run analyze:simpan` | Analisis bundle per rute (UI interaktif) / simpan hasilnya ke `.next/diagnostics` untuk dibandingkan sebelum–sesudah |
 | `frontend` | `npm test` | Tes Vitest: error boundary, 404, Server Action saat API gagal, validasi unggah |
 | `backend` | `npm test` | Tes `node:test` + supertest (tanpa MySQL/Vercel Blob): 4xx/401/403/404/500, rate limit, request ID, log, unggah |
 | `backend` | `npm run build && npm start` | Kompilasi TypeScript ke `dist/` lalu jalankan |
@@ -243,11 +246,13 @@ Base URL: `http://localhost:4000/api`
 | `GET` | `/toko/:slug/produk` | Produk milik satu toko (rute bertingkat) |
 | `PUT` | `/toko/:slug/foto` · `/toko/:slug/stempel` | Unggah foto sampul / stempel otentikasi ke Vercel Blob. Body = isi berkas mentah, `Content-Type: image/jpeg \| image/png \| image/webp`, maks. 2 MB. 415 tipe salah, 413 terlalu besar, 422 isi bukan gambar, 503 storage belum dikonfigurasi. Maks. 20 unggahan/15 menit per pengguna |
 | `GET` | `/pengajuan` | Daftar pengajuan toko baru |
-| `PATCH` | `/pengajuan/:slug` | Body `{ keputusan: "verifikasi" \| "tolak" }`. Verifikasi = toko baru masuk direktori (transaksi) |
+| `PATCH` | `/pengajuan/:slug` | Body `{ keputusan: "verifikasi" \| "tolak" }`. Verifikasi = toko baru masuk direktori (transaksi). Pengajuan lewat 72 jam → status `kedaluwarsa`, verifikasi ditolak **409** `PENGAJUAN_KEDALUWARSA` (tolak/hapus tetap boleh) |
 | `GET` | `/produk` | Daftar produk + `meta.kategori` & `meta.ringkasan`. Query: `q`, `kategori`, `toko` |
 | `DELETE` | `/produk/:id` | Hapus produk + kurangi jumlah produk toko (transaksi) |
 | `GET` | `/akun` | Daftar akun pengrajin + `meta.ringkasan`. Query: `q`, `peran`, `status` |
 | `PATCH` | `/akun/:id/status` | Body `{ status: "aktif" \| "menunggu" \| "ditangguhkan" }`; sesi dicabut dalam transaksi yang sama |
+| `POST` | `/vitals` | Data lapangan Core Web Vitals. Body `{ halaman: "/dashboard", metrik: [{ name: "LCP", value: 812, rating: "good" }] }` (1–10 metrik: LCP/INP/CLS/FCP/TTFB) → 204, dicatat ke log Pino. Maks. 60 laporan/menit per pengguna |
+| `GET` | `/gambar` | Admin. Catatan berkas Vercel Blob di tabel `gambar` + `meta.ringkasan` (jumlah & total byte per jenis) |
 
 Selain `/health`, `/auth/login`, dan `/auth/register`, semua endpoint wajib login: header `Authorization: Bearer <token>` **atau** cookie `kd_api_session`.
 Respons GET menyertakan header `Cache-Control: private` dan `ETag` (request ulang dengan `If-None-Match` dijawab `304`).
@@ -496,7 +501,7 @@ Store yang dipakai: **`dinoyo-admin-media`** (team *Rafi*, region `sin1` Singapu
 
 | Kebutuhan | File | Implementasi |
 | --- | --- | --- |
-| Header keamanan | `next.config.ts` | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, HSTS (production). `allowedOrigins` tidak diisi karena tidak ada proxy yang mengganti host |
+| Header keamanan | `next.config.ts` | **CSP tanpa nonce** (lihat Pertemuan 14), `X-Robots-Tag: noindex, nofollow`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, HSTS (production). `allowedOrigins` tidak diisi karena tidak ada proxy yang mengganti host |
 | Server Actions | `src/lib/actions/api.ts`, `cache.ts`, `auth.ts` | Setiap action memeriksa sesi & izin sendiri (401/403), memvalidasi argumen (slug, id, enum, berkas), dan hanya mengembalikan `{ ok, status, message }` / data; pesan 5xx dari API diganti pesan umum |
 | Error boundary | `src/app/error.tsx`, `src/app/(admin)/error.tsx` | Client Component, pesan aman + `digest`, tombol **Coba Lagi** memanggil `retry()` (nama prop di Next.js 16.3; `reset()` hanya me-render ulang tanpa fetch) |
 | Error event handler | `TokoForm`, `TokoManager`, `ProdukManager`, `AkunManager`, `VerificationPanel`, form login/daftar | `try/catch` + state/toast — error dari event handler tidak ditangkap error boundary |
@@ -504,6 +509,114 @@ Store yang dipakai: **`dinoyo-admin-media`** (team *Rafi*, region `sin1` Singapu
 | Error root layout | `src/app/global-error.tsx` | Punya `<html>` & `<body>` sendiri, tanpa `error.message` |
 | Pelaporan error server | `src/instrumentation.ts` | `onRequestError` → satu baris JSON: digest, method, path tanpa query, route; tanpa header; token/kata sandi disensor (`src/lib/redact.ts`) |
 | Tes | `frontend/tests/*.test.ts(x)` | 27 tes Vitest: error boundary & global-error tidak membocorkan detail, 404, Server Action saat API mati/500/4xx/401, validasi unggah, log instrumentation |
+
+## Performa, SEO & Advanced Rendering (Pertemuan 14)
+
+Prinsipnya: **ukur dulu, baru optimasi**. Semua angka di bawah diambil dari build produksi (`next build` → `next start`,
+bukan `next dev`) di mesin lokal dengan backend & MySQL menyala, median 5 request per rute.
+
+### 1. Ukur — baseline vs sesudah
+
+| Rute | TTFB sebelum | TTFB sesudah | Selesai sebelum | Selesai sesudah |
+| --- | --- | --- | --- | --- |
+| `/login` | 27 ms | **8 ms** | 28 ms | 30 ms |
+| `/daftar` | 27 ms | **9 ms** | 28 ms | 24 ms |
+| `/dashboard` | 50 ms | **10 ms** | 51 ms | 70 ms |
+| `/produk` | 45 ms | **12 ms** | 46 ms | 67 ms |
+| `/toko` | 251 ms | **11 ms** | 253 ms | 128 ms |
+| `/laporan` | 255 ms | **11 ms** | 256 ms | 112 ms |
+| `/beranda` (pengrajin) | 515 ms | **11 ms** | 533 ms | 76 ms |
+
+- **Sebelum:** TTFB ≈ waktu selesai di setiap rute, artinya browser menunggu *seluruh* data Express sebelum menerima byte pertama.
+- **Sesudah:** cangkang statis terkirim dalam ±10 ms, sedangkan data menyusul lewat streaming. Untuk `/dashboard` & `/produk`, waktu
+  selesai sedikit naik (+20 ms) karena HTML kini memuat kerangka *dan* konten. Harga ini dibayar demi tampilan yang muncul jauh lebih awal.
+- **Bundle JS** (`npm run analyze:simpan`): 477–566 KB → 484–574 KB first-load per rute (belum dikompresi). Kenaikan ±8 KB berasal dari
+  library `web-vitals` (pengukur lapangan) dan `FreshOnNavigate`. Tidak ada library berat di Client Component (satu-satunya dependensi UI
+  adalah `lucide-react`), jadi tidak ada yang perlu dipindah ke Server Component.
+- **Lighthouse (lab):** buka DevTools → Lighthouse pada build produksi, lalu catat LCP, CLS, dan TBT (INP tidak terukur tanpa interaksi;
+  TBT adalah pendekatannya di lab). Patokan di persentil ke-75: **LCP ≤ 2,5 s, INP ≤ 200 ms, CLS ≤ 0,1**.
+- **Lapangan (RUM):** [`WebVitals`](frontend/src/components/site/WebVitals.tsx) mengumpulkan LCP/INP/CLS/FCP/TTFB pengguna sungguhan.
+  Development → dicetak ke console browser. Production → satu laporan per kunjungan saat tab ditutup (`sendBeacon`)
+  → [`/api/vitals`](frontend/src/app/api/vitals/route.ts) (menambahkan token sesi) → `POST /api/vitals` di Express
+  → satu baris log Pino per metrik (`web-vital LCP /dashboard`). Dari log ini persentil ke-75 per halaman bisa dihitung setelah rilis.
+
+### 2. Rendering — Cache Components & Partial Prerendering
+
+`cacheComponents: true` di [`next.config.ts`](frontend/next.config.ts). Hasil `next build`: **15 rute ƒ (dinamis penuh) → semua ◐
+(Partial Prerender)**, dan `/_not-found`, `/robots.txt`, `/opengraph-image` statis penuh (○).
+
+| Bagian halaman | Nasib | Contoh |
+| --- | --- | --- |
+| Statis otomatis | Masuk cangkang saat build | `<html>`, font, panel brand login, kerangka sidebar/header ([`AdminShellSkeleton`](frontend/src/components/feedback/AdminShellSkeleton.tsx)) |
+| `'use cache'` | Data Express di-cache per sesi | [`lib/api/server.ts`](frontend/src/lib/api/server.ts): `fetchTercache()` + `cacheLife(...)` + `cacheTag(...)`, profil di [`cacheProfiles.ts`](frontend/src/constants/cacheProfiles.ts) |
+| `<Suspense>` (stream) | Butuh cookie/searchParams | verifikasi sesi di [`(admin)/layout.tsx`](frontend/src/app/(admin)/layout.tsx), form login, cek "sudah login?" di `/daftar` |
+
+Jebakan yang ditemukan & diperbaiki:
+
+- **`await` di puncak layout.** Root layout dulu menunggu `getCurrentUser()`, sehingga *semua* rute, termasuk `/login`, menjadi dinamis.
+  Kini root layout tidak membaca cookie sama sekali, dan sesi dibaca lebih dalam di balik `<Suspense>`.
+- **Cookie di dalam cache.** `cookies()` tidak boleh dibaca di scope `'use cache'`, jadi token dibaca di luar lalu dikirim sebagai
+  argumen. Argumen ikut menjadi *cache key*, sehingga cache tetap terpisah per sesi. Respons gagal (401/403) hanya hidup 1 detik.
+- **State dipertahankan antar navigasi.** Cache Components menyembunyikan halaman dengan `<Activity>` alih-alih membongkarnya.
+  Tanpa penanganan, setelah *Tambah Produk* → `router.push("/produk")`, daftar produk masih menampilkan data lama (`useState(initialProduk)`).
+  [`FreshOnNavigate`](frontend/src/components/layout/FreshOnNavigate.tsx) memakai `bfcacheId` sebagai `key`: navigasi baru →
+  halaman segar, tombol Back/Forward → isian & filter dipulihkan.
+- **`redirect()`/`forbidden()` saat streaming.** Karena cangkang sudah terkirim, status HTTP-nya 200 dan pengalihan dilakukan di
+  browser (meta refresh + router). Halaman 403/404 tetap tampil benar dan diberi `noindex`, dan data halaman terlarang tidak ikut terkirim.
+  Pengguna tanpa cookie tetap mendapat **307** sungguhan dari `proxy.ts`.
+
+### 3. Gambar & SEO
+
+| Materi | Implementasi |
+| --- | --- |
+| `sizes` yang benar | [`constants/imageSizes.ts`](frontend/src/constants/imageSizes.ts) menghitung lebar nyata kolom konten (sidebar 288px, `max-w-[1200px]`). Sebelumnya `100vw`/`50vw`/`25vw` membuat browser mengunduh gambar ±30–40% lebih besar |
+| `preload` (pengganti `priority` yang deprecated sejak Next.js 16) | Hanya pada foto hero [`BerandaHero`](frontend/src/app/(admin)/beranda/components/BerandaHero.tsx), satu-satunya kandidat LCP bergambar |
+| Metadata | Judul per halaman + template `%s • Dinoyo Craft Admin`; `generateMetadata` di `/toko/[slug]` berbagi data dengan halaman lewat `cache` dari React (sekali fetch per request) |
+| `noindex` | Panel privat: meta `robots: noindex, nofollow` ([`layout.tsx`](frontend/src/app/layout.tsx)) + header `X-Robots-Tag` untuk semua respons |
+| robots.txt **bukan pagar** | [`robots.ts`](frontend/src/app/robots.ts) sengaja **tidak** `Disallow: /`. URL yang diblokir tetap bisa terindeks lewat tautan luar, dan crawler justru tak pernah melihat `noindex`-nya. Hanya `/api/` yang di-Disallow |
+| Sitemap / JSON-LD | Sengaja **tidak dibuat**: keduanya untuk halaman yang *ingin* ditemukan. Panel ini tidak punya halaman publik |
+| Open Graph | [`opengraph-image.tsx`](frontend/src/app/opengraph-image.tsx) (`ImageResponse`, dibuat sekali saat build) untuk pratinjau tautan saat link panel dibagikan di grup WhatsApp |
+
+### 4. CSP: nonce itu *trade-off*
+
+Dipilih **CSP tanpa nonce** (header statis di `next.config.ts`). CSP + nonce memaksa setiap halaman dirender dinamis dan tidak
+kompatibel dengan Partial Prerendering. Harganya `script-src 'unsafe-inline'` (skrip inline Next.js & skrip tema). Direktif lainnya
+tetap ketat: `default-src 'self'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'none'`, dan
+`upgrade-insecure-requests` hanya bila `NEXT_PUBLIC_SITE_URL` berawalan `https://`.
+
+### 5. Backend ikut menentukan cepat
+
+| Materi | Status |
+| --- | --- |
+| Kompresi | `compression` dipasang di [`app.ts`](backend/src/app.ts): JSON `/toko` 4,8 KB → 1,6 KB (gzip), `/laporan` 2,9 KB → 1,4 KB. Untuk trafik tinggi, pindahkan ke reverse proxy (P15) |
+| Fungsi sinkron | Hanya `hashPasswordSync` saat startup (data seed & dummy hash). Hash/verifikasi saat request memakai `scrypt` async |
+| Logging | Pino (asinkron), bukan `console.log` (sinkron) |
+| `NODE_ENV=production` | Disetel saat deployment (P15) |
+
+
+## Timer Pengajuan, Peta Lorong, Validasi & Lapisan Models
+
+### Frontend
+
+| Fitur | File | Keterangan |
+| --- | --- | --- |
+| Animasi popup & section | [`Modal.tsx`](frontend/src/components/ui/Modal.tsx), [`globals.css`](frontend/src/app/globals.css) | Dialog masuk (latar memudar, kartu naik + membesar) dan **keluar** (dialog ditahan di DOM sampai `animationend`, isi terakhir tetap tampil). Section halaman muncul bergiliran (`stagger-rise`). Hanya `opacity`/`transform` (CLS 0), dan mati bila OS meminta *reduced motion* |
+| Timer pendaftaran toko | [`VerificationItem.tsx`](frontend/src/app/(admin)/dashboard/components/VerificationItem.tsx), [`useNow.ts`](frontend/src/hooks/useNow.ts) | Hitung mundur 3×24 jam per pengajuan + bar sisa waktu (hijau → kuning < 24 jam → merah < 6 jam). Lewat batas → kartu **dinonaktifkan**: tombol Verifikasi hilang, tersisa "Hapus dari antrean". Satu `setInterval` bersama untuk semua countdown, aman dari hydration mismatch |
+| Peta sebaran lorong asli | [`LorongDistributionCard.tsx`](frontend/src/app/(admin)/toko/components/LorongDistributionCard.tsx), [`peta/`](frontend/src/app/(admin)/toko/components/peta) | **Leaflet + OpenStreetMap** (tanpa API key). Titik dari kolom `koordinat` toko, warna = warna lorong, garis putus = menunggu review. Klik lorong untuk menyorot & memusatkan peta. Dimuat hanya di browser (`next/dynamic` `ssr:false`), ubin OSM diizinkan di CSP `img-src` |
+| Nama pengrajin hanya huruf | [`IdentitySection.tsx`](frontend/src/app/(admin)/toko/components/form/IdentitySection.tsx), [`lib/validation/text.ts`](frontend/src/lib/validation/text.ts) | Angka & simbol langsung dibuang saat diketik/ditempel + pesan penjelasan; gelar bertitik ("H.", "Bpk.") tetap boleh |
+| Validasi halaman produk | [`produkFormConfig.ts`](frontend/src/app/(admin)/produk/components/form/produkFormConfig.ts), [`ProdukForm.tsx`](frontend/src/app/(admin)/produk/components/form/ProdukForm.tsx) | Error per kolom muncul setelah kolom disentuh (bukan sebelum mengetik); saat simpan gagal → ringkasan semua error + scroll & fokus ke kolom pertama. Aturan karakter nama/bahan sama dengan backend |
+| Dropdown shadcn Select | [`components/ui/select.tsx`](frontend/src/components/ui/select.tsx), `SelectField`, `FilterSelect` | Komponen Select ala shadcn/ui (Radix) dengan token tema panel. **Semua** dropdown memakainya (teknik pembuatan + keterangan tiap teknik, toko, kategori, label, peran, filter, periode laporan). `components.json` disiapkan untuk `npx shadcn add` |
+| Kelola produk (pengrajin) | [`produk/page.tsx`](frontend/src/app/(admin)/produk/page.tsx), [`ProdukManager.tsx`](frontend/src/app/(admin)/produk/components/ProdukManager.tsx) | Judul "Produk Toko Saya" + nama toko; kurasi, ekspor rekap & sinkronisasi WhatsApp (khusus admin) disembunyikan; filter toko hilang bila toko cuma satu; chip kategori hanya yang berisi produk; keadaan kosong dengan tombol "Tambah Produk" |
+
+### Backend
+
+| Fitur | File | Keterangan |
+| --- | --- | --- |
+| Folder `models/` | [`backend/src/models`](backend/src/models) | Satu file per entitas (`toko`, `produk`, `akun`, `user`, `pengajuan`, `gambar`): bentuk data domain + aturan bisnis yang melekat (batas waktu pengajuan, daftar teknik resmi). `src/types` kini hanya meneruskan dari `models` |
+| Timer pengajuan | [`pengajuan.model.ts`](backend/src/models/pengajuan.model.ts), [`pengajuan.repository.ts`](backend/src/repositories/pengajuan.repository.ts) | Kolom `diajukan_pada` + `status` (`menunggu`/`kedaluwarsa`). Yang lewat 72 jam ditandai kedaluwarsa setiap antrean dibaca (*lazy expiry*, tanpa cron). Verifikasi pengajuan kedaluwarsa → **409 `PENGAJUAN_KEDALUWARSA`**; menolak/menghapusnya tetap boleh |
+| Vercel Blob ↔ database | [`gambar.model.ts`](backend/src/models/gambar.model.ts), [`gambar.repository.ts`](backend/src/repositories/gambar.repository.ts) | Tabel baru **`gambar`** mencatat setiap berkas Blob (url, pathname, tipe, ukuran, jenis, toko/produk, pengunggah). Ditulis dalam transaksi yang sama dengan kolom `foto`/`stempel`; catatan foto lama dilepas saat diganti; ikut terhapus (CASCADE) bila toko/produk dihapus. Migrasi mem-*backfill* URL Blob yang sudah ada. `GET /api/gambar` (admin) = daftar + ringkasan pemakaian storage |
+| Validasi | [`validators/index.ts`](backend/src/validators/index.ts) | `pemilik` (nama pengrajin) hanya huruf; `teknik` wajib dari daftar resmi; nama produk & bahan menolak karakter HTML/simbol |
+| Migrasi | `prisma/migrations/20261118000000_pengajuan_timer_gambar` | Jalankan `npm run db:deploy` (aditif, data lama aman). Pengajuan lama mulai dihitung mundur sejak migrasi; `npm run db:seed` memberi contoh pengajuan baru, hampir habis, dan kedaluwarsa |
 
 ---
 
