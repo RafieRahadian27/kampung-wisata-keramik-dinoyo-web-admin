@@ -1,5 +1,5 @@
 import { CircleHelp } from "lucide-react";
-import { ToastButton } from "@/components/ui/ToastButton";
+import { ButtonLink } from "@/components/ui/Button";
 import { IconTile } from "@/components/ui/IconTile";
 
 export function SyncHelpCard() {
@@ -12,13 +12,13 @@ export function SyncHelpCard() {
         <div className="min-w-0">
           <h2 className="text-base font-semibold text-on-surface">Pusat Bantuan Sinkronisasi WhatsApp Pengrajin</h2>
           <p className="text-xs leading-[18px] text-on-surface-variant">
-            Setiap karya yang diterbitkan langsung terhubung ke nomor admin koperasi atau kontak pengrajin bersangkutan.
+            Tombol &quot;Tanya Pengrajin&quot; di setiap karya memakai nomor WhatsApp pada profil toko. Pastikan nomornya aktif dan hanya berisi angka (08…/62…).
           </p>
         </div>
       </div>
-      <ToastButton variant="secondary" message="Sinkronisasi nomor WhatsApp pengrajin dijadwalkan." className="self-start sm:self-center">
-        Sinkronkan Seluruh Data
-      </ToastButton>
+      <ButtonLink href="/toko" variant="secondary" className="self-start sm:self-center">
+        Periksa Kontak Toko
+      </ButtonLink>
     </section>
   );
 }

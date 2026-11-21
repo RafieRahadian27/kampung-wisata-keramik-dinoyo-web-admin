@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { Download, UserPlus } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Eyebrow, PageHeader } from "@/components/ui/PageHeader";
-import { ToastButton } from "@/components/ui/ToastButton";
+import { UnduhCsvButton } from "@/components/ui/UnduhCsvButton";
 import { RIWAYAT_AKUN } from "@/data/aktivitas";
 import { getAkunList } from "@/lib/api/server";
 import { requirePermission } from "@/lib/dal";
 import { AccountActivityLog } from "./components/AccountActivityLog";
 import { AkunManager } from "./components/AkunManager";
 import { AkunStats } from "./components/AkunStats";
+import { SalinTautanDaftarButton } from "./components/SalinTautanDaftarButton";
 import { SupportCard } from "./components/SupportCard";
 import { FreshOnNavigate } from "@/components/layout/FreshOnNavigate";
 
@@ -31,14 +31,17 @@ export default async function KelolaAkunPage() {
         description="Atur hak akses login pengrajin sentra keramik Dinoyo, verifikasi akun toko baru, reset kata sandi, dan status keaktifan dalam paguyuban."
         actions={
           <>
-            <ToastButton variant="tonal" size="lg" message="Data akun pengrajin sedang diekspor.">
-              <Download className="size-4" aria-hidden />
+            {/* NIK sengaja tidak diekspor: data kependudukan sensitif tidak boleh tersebar lewat berkas. */}
+            <UnduhCsvButton
+              namaBerkas="data-akun-pengrajin"
+              baris={[
+                ["Nama", "Email", "Toko", "Lokasi", "Peran", "WhatsApp", "Status", "Terakhir Aktif"],
+                ...data.map((a) => [a.nama, a.email, a.toko, a.lokasi, a.peran, a.whatsapp, a.status, a.terakhirAktif]),
+              ]}
+            >
               Unduh Data Akun
-            </ToastButton>
-            <ToastButton size="lg" message="Formulir akun pengrajin baru sedang disiapkan.">
-              <UserPlus className="size-4" aria-hidden />
-              Tambah Akun Pengrajin
-            </ToastButton>
+            </UnduhCsvButton>
+            <SalinTautanDaftarButton />
           </>
         }
       />

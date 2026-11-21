@@ -15,6 +15,7 @@ import { invalidateCache } from "@/lib/actions/cache";
 import { produkApi } from "@/lib/api/client";
 import { CACHE_TAGS } from "@/lib/api/config";
 import { cn, formatRupiah } from "@/lib/utils";
+import { hanyaKarakterNamaProduk } from "@/lib/validation/text";
 import { FOTO_ACCEPT, FOTO_MAX_BYTES, formatBytes, validateFoto } from "@/lib/validation/upload";
 import type { HargaPasar, ProdukFormValues } from "@/types";
 import { STATUS_PRODUK_TONE } from "../produkTone";
@@ -67,6 +68,7 @@ export function ProdukForm({ toko, kategori, hargaPasar }: ProdukFormProps) {
   // atau setelah tombol Simpan ditekan — tidak memarahi pengguna sebelum sempat mengetik.
   const [touched, setTouched] = useState<ReadonlySet<keyof ProdukFormValues>>(new Set());
   const [submitted, setSubmitted] = useState(false);
+  const [peringatanNama, setPeringatanNama] = useState<string>();
   const [foto, setFoto] = useState<File | null>(null);
   const [fotoError, setFotoError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
@@ -274,10 +276,18 @@ export function ProdukForm({ toko, kategori, hargaPasar }: ProdukFormProps) {
                 placeholder="mis. Cangkir Kopi Celadon Matte"
                 maxLength={120}
                 value={values.nama}
-                onChange={(event) => update("nama", event.target.value)}
-                onBlur={() => sentuh("nama")}
+                onChange={(event) => {
+                  // Nama produk hanya huruf: angka & simbol dibuang saat diketik/ditempel.
+                  const { value, ditolak } = hanyaKarakterNamaProduk(event.target.value);
+                  setPeringatanNama(ditolak ? "Angka dan simbol tidak diizinkan pada nama produk — gunakan huruf saja." : undefined);
+                  update("nama", value);
+                }}
+                onBlur={() => {
+                  setPeringatanNama(undefined);
+                  sentuh("nama");
+                }}
                 aside={`${values.nama.length}/120`}
-                error={errors.nama}
+                error={errors.nama ?? peringatanNama}
               />
               <SelectField
                 label="Teknik Pembuatan"

@@ -5,8 +5,16 @@
 
 /** Nama orang: hanya huruf (semua aksara), spasi, titik (gelar "H.", "Bpk."), petik, tanda hubung. */
 export const NAMA_ORANG_PATTERN = /^[\p{L}][\p{L} .'-]*$/u;
-/** Nama produk/bahan: diawali huruf/angka; boleh spasi & tanda baca sederhana. */
-export const NAMA_PRODUK_PATTERN = /^[\p{L}\p{N}][\p{L}\p{N} .,'&()/-]*$/u;
+/** Nama produk: HANYA huruf, spasi & tanda baca sederhana — tanpa angka. */
+export const NAMA_PRODUK_PATTERN = /^[\p{L}][\p{L} .,'&()/-]*$/u;
+/** Bahan: boleh angka (mis. "Kiln 1100°"). */
+export const BAHAN_PRODUK_PATTERN = /^[\p{L}\p{N}][\p{L}\p{N} .,'&()/°-]*$/u;
+
+/** Saring ketikan nama produk: angka & simbol yang tak diizinkan langsung dibuang. */
+export function hanyaKarakterNamaProduk(raw: string): { value: string; ditolak: boolean } {
+  const value = raw.replace(/[^\p{L} .,'&()/-]/gu, "");
+  return { value, ditolak: value !== raw };
+}
 
 /**
  * Saring ketikan untuk kolom nama orang: angka & simbol langsung dibuang saat diketik/ditempel,

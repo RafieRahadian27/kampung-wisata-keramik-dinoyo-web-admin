@@ -40,7 +40,7 @@ export function Sidebar() {
       <aside
         id="admin-sidebar"
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-surface-low transition-transform duration-300",
+          "fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-surface-low transition-transform duration-300 print:hidden",
           "lg:translate-x-0",
           isSidebarOpen ? "translate-x-0 shadow-float" : "-translate-x-full",
         )}

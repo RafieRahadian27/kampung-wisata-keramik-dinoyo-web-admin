@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { CirclePlus, Download, Landmark } from "lucide-react";
+import { CirclePlus, Landmark } from "lucide-react";
 import { AuthGate } from "@/components/site/auth-gate";
 import { ButtonLink } from "@/components/ui/Button";
 import { Eyebrow, PageHeader } from "@/components/ui/PageHeader";
-import { ToastButton } from "@/components/ui/ToastButton";
+import { UnduhCsvButton } from "@/components/ui/UnduhCsvButton";
 import { getTokoList } from "@/lib/api/server";
 import { requirePermission } from "@/lib/dal";
 import { LorongDistributionCard } from "./components/LorongDistributionCard";
@@ -27,13 +27,17 @@ export default async function KelolaTokoPage() {
         description="Kelola data profil gerai UMKM, status akreditasi paguyuban, dan kontak pengrajin di lorong Dinoyo untuk memastikan keaslian karya kriya lokal."
         actions={
           <>
-            <ToastButton variant="tonal" size="lg" message="Rekap direktori toko sedang disiapkan (XLSX).">
-              <Download className="size-4" aria-hidden />
-              Unduh Rekap
-            </ToastButton>
+            <UnduhCsvButton
+              namaBerkas="rekap-direktori-toko"
+              baris={[
+                ["Nama Toko", "Pengrajin", "WhatsApp", "Wilayah Lorong", "Alamat", "Spesialisasi", "Status", "Jumlah Produk", "Tahun Berdiri", "Koordinat"],
+                ...data.map((t) => [t.nama, t.pemilik, t.whatsapp, t.wilayah, t.alamat, t.spesialisasi, t.status, t.jumlahProduk, t.tahunBerdiri, t.koordinat]),
+              ]}
+            />
             <AuthGate permission="toko:create">
               <ButtonLink href="/toko/tambah" size="lg">
-                <CirclePlus className="size-5" aria-hidden />+ Tambah Toko Baru
+                <CirclePlus className="size-5" aria-hidden />
+                Tambah Toko Baru
               </ButtonLink>
             </AuthGate>
           </>

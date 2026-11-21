@@ -40,7 +40,7 @@ export default async function LaporanPage() {
           title="Laporan Kunjungan & Reservasi Workshop"
           description="Pantau arus wisatawan edukasi, pemesanan workshop tanah liat, transaksi kriya, dan statistik klik WhatsApp pengrajin secara real-time di Kampung Dinoyo."
         />
-        <ReportToolbar periode={laporan.periode} />
+        <ReportToolbar periode={laporan.periode} laporan={laporan} />
       </div>
       <ReportStats ringkasan={laporan.ringkasan} />
       {/* Kolom utama (tren & riwayat reservasi) + kolom samping 320px (sebaran, paket, unduhan). */}

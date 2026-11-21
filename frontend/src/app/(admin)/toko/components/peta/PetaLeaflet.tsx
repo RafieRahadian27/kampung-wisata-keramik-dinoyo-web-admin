@@ -4,10 +4,11 @@ import "leaflet/dist/leaflet.css";
 import Link from "next/link";
 import { useEffect } from "react";
 import { CircleMarker, MapContainer, Popup, TileLayer, Tooltip, useMap } from "react-leaflet";
+import { PUSAT_DINOYO } from "./pusat";
 import type { TitikToko } from "./titikToko";
 
 /** Pusat Kampung Wisata Keramik Dinoyo — dipakai bila belum ada toko yang berkoordinat. */
-const PUSAT_DINOYO: [number, number] = [-7.9425, 112.6089];
+const PUSAT: [number, number] = [PUSAT_DINOYO.lat, PUSAT_DINOYO.lng];
 
 const STATUS_LABEL: Record<TitikToko["status"], string> = {
   terverifikasi: "Terverifikasi",
@@ -47,7 +48,7 @@ export default function PetaLeaflet({ titik, wilayahAktif }: PetaLeafletProps) {
   const disorot = wilayahAktif ? titik.filter((t) => t.wilayah === wilayahAktif) : titik;
 
   return (
-    <MapContainer center={PUSAT_DINOYO} zoom={17} scrollWheelZoom={false} className="size-full" aria-label="Peta sebaran toko di Kampung Keramik Dinoyo">
+    <MapContainer center={PUSAT} zoom={17} scrollWheelZoom={false} className="size-full" aria-label="Peta sebaran toko di Kampung Keramik Dinoyo">
       <TileLayer
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

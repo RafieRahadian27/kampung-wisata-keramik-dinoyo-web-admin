@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Download, Plus, Store } from "lucide-react";
+import { Plus, Store } from "lucide-react";
 import { FreshOnNavigate } from "@/components/layout/FreshOnNavigate";
 import { AuthGate } from "@/components/site/auth-gate";
 import { ButtonLink } from "@/components/ui/Button";
 import { Eyebrow, PageHeader } from "@/components/ui/PageHeader";
-import { ToastButton } from "@/components/ui/ToastButton";
+import { UnduhCsvButton } from "@/components/ui/UnduhCsvButton";
 import { getProdukList } from "@/lib/api/server";
 import { requirePermission } from "@/lib/dal";
 import { CuratedHighlights } from "./components/CuratedHighlights";
@@ -50,12 +50,15 @@ export default async function KelolaProdukPage() {
                 Tambah Produk
               </ButtonLink>
             </AuthGate>
-            {!modePengrajin && (
-              <ToastButton variant="tonal" size="lg" message="Rekap katalog sedang diekspor ke format XLSX.">
-                <Download className="size-4" aria-hidden />
-                Ekspor Rekap
-              </ToastButton>
-            )}
+            <UnduhCsvButton
+              namaBerkas={modePengrajin ? "katalog-toko-saya" : "rekap-katalog-produk"}
+              baris={[
+                ["SKU", "Nama Produk", "Toko", "Kategori", "Teknik", "Bahan", "Harga (Rp)", "Status", "Stok", "Lokasi Stok"],
+                ...data.map((p) => [p.sku, p.nama, p.toko.nama, p.kategori, p.teknik, p.bahan, p.harga, p.status, p.stokLabel, p.lokasiStok]),
+              ]}
+            >
+              Ekspor Rekap
+            </UnduhCsvButton>
           </>
         }
       />

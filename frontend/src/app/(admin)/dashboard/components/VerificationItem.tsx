@@ -4,7 +4,6 @@ import { Check, Eye, Hourglass, TimerOff, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { useToast } from "@/context/ToastContext";
 import { cn } from "@/lib/utils";
 import type { PengajuanToko } from "@/types";
 
@@ -16,7 +15,7 @@ const BATAS_MS = 72 * JAM;
 const dua = (n: number) => String(n).padStart(2, "0");
 
 /** ≥ 24 jam: "2 hari 5 jam"; < 24 jam: "05:12:09" agar terasa mendesak. */
-function formatSisa(ms: number): string {
+export function formatSisa(ms: number): string {
   const totalDetik = Math.max(0, Math.floor(ms / 1000));
   const hari = Math.floor(totalDetik / 86_400);
   const jam = Math.floor((totalDetik % 86_400) / 3600);
@@ -39,6 +38,8 @@ interface VerificationItemProps {
   kedaluwarsa: boolean;
   isBusy: boolean;
   onDecision: (item: PengajuanToko, keputusan: Keputusan) => void;
+  /** Buka dialog detail berkas pengajuan. */
+  onReview: (item: PengajuanToko) => void;
 }
 
 /**
@@ -46,8 +47,7 @@ interface VerificationItemProps {
  * Lewat batas → kartu dinonaktifkan: tombol Verifikasi mati, yang tersisa hanya "Hapus dari antrean".
  * Penegakan sebenarnya di Express (409 PENGAJUAN_KEDALUWARSA); di sini hanya tampilan.
  */
-export function VerificationItem({ item, now, kedaluwarsa, isBusy, onDecision }: VerificationItemProps) {
-  const { showToast } = useToast();
+export function VerificationItem({ item, now, kedaluwarsa, isBusy, onDecision, onReview }: VerificationItemProps) {
   const sisa = now === null ? null : Date.parse(item.batasWaktu) - now;
   const persen = sisa === null ? 100 : Math.max(0, Math.min(100, (sisa / BATAS_MS) * 100));
   const nada = sisa === null ? nadaSisa(BATAS_MS) : nadaSisa(sisa);
@@ -110,7 +110,7 @@ export function VerificationItem({ item, now, kedaluwarsa, isBusy, onDecision }:
           </Button>
         ) : (
           <>
-            <Button variant="tonal" size="sm" onClick={() => showToast(`Membuka berkas ${item.nama}…`, "info")} disabled={isBusy}>
+            <Button variant="tonal" size="sm" onClick={() => onReview(item)} disabled={isBusy}>
               <Eye className="size-3.5" aria-hidden />
               Review
             </Button>

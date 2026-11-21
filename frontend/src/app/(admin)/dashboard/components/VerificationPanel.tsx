@@ -12,7 +12,8 @@ import { ApiError, CACHE_TAGS } from "@/lib/api/config";
 import { useNow } from "@/hooks/useNow";
 import { cn } from "@/lib/utils";
 import type { PengajuanToko } from "@/types";
-import { VerificationItem, type Keputusan } from "./VerificationItem";
+import { ReviewPengajuanDialog } from "./ReviewPengajuanDialog";
+import { formatSisa, VerificationItem, type Keputusan } from "./VerificationItem";
 
 interface VerificationPanelProps {
   pengajuan: PengajuanToko[];
@@ -29,17 +30,20 @@ export function VerificationPanel({ pengajuan, terakhirDisetujui, totalPendaftar
   const { showToast } = useToast();
   const [items, setItems] = useState(pengajuan);
   const [busySlug, setBusySlug] = useState<string | null>(null);
+  const [reviewSlug, setReviewSlug] = useState<string | null>(null);
   const [lastApproved, setLastApproved] = useState(terakhirDisetujui);
   // Satu jam bersama untuk semua countdown; status kedaluwarsa juga berubah "live" saat batas lewat.
   const now = useNow();
   const isKedaluwarsa = (item: PengajuanToko) => item.status === "kedaluwarsa" || (now !== null && Date.parse(item.batasWaktu) <= now);
   const jumlahMenunggu = items.filter((item) => !isKedaluwarsa(item)).length;
+  const reviewItem = items.find((item) => item.slug === reviewSlug) ?? null;
 
   const handleDecision = async (item: PengajuanToko, keputusan: Keputusan) => {
     setBusySlug(item.slug);
     try {
       const { message } = await tokoApi.putuskanPengajuan(item.slug, keputusan);
       setItems((current) => current.filter((entry) => entry.slug !== item.slug));
+      setReviewSlug(null);
       if (keputusan === "verifikasi") {
         setLastApproved({ nama: item.nama, catatan: "Baru saja diverifikasi oleh Anda" });
       }
@@ -82,6 +86,7 @@ export function VerificationPanel({ pengajuan, terakhirDisetujui, totalPendaftar
             kedaluwarsa={isKedaluwarsa(item)}
             isBusy={busySlug === item.slug}
             onDecision={handleDecision}
+            onReview={(entry) => setReviewSlug(entry.slug)}
           />
         ))}
         {items.length === 0 && (
@@ -116,6 +121,14 @@ export function VerificationPanel({ pengajuan, terakhirDisetujui, totalPendaftar
           <ArrowRight className="size-3.5" aria-hidden />
         </Link>
       </div>
+      <ReviewPengajuanDialog
+        item={reviewItem}
+        kedaluwarsa={reviewItem ? isKedaluwarsa(reviewItem) : false}
+        sisaWaktu={reviewItem && now !== null ? formatSisa(Date.parse(reviewItem.batasWaktu) - now) : null}
+        isBusy={reviewItem !== null && busySlug === reviewItem.slug}
+        onClose={() => setReviewSlug(null)}
+        onDecision={handleDecision}
+      />
     </section>
   );
 }

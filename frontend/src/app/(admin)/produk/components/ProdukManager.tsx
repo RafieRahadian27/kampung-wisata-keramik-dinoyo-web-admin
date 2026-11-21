@@ -21,7 +21,7 @@ import { ProdukGrid } from "./ProdukGrid";
 import { ProdukTable } from "./ProdukTable";
 
 type ViewMode = "list" | "grid";
-const PAGE_SIZE = 4;
+const PAGE_SIZE = 8;
 
 interface ProdukManagerProps {
   initialProduk: Produk[];

@@ -1,5 +1,6 @@
 import type { Toko, TokoFormValues } from "@/types";
 import { validateNamaPengrajin } from "@/lib/validation/text";
+import { parseKoordinat } from "../peta/titikToko";
 
 export const KATEGORI_SPESIALISASI = ["Semi-Porselen", "Gerabah Alami", "Guci & Hiasan", "Tableware Kafe", "Edukasi Workshop"] as const;
 
@@ -50,7 +51,8 @@ export function toFormValues(toko: Toko): TokoFormValues {
     wilayah: toko.wilayah,
     alamat: toko.alamat,
     koordinat: toko.koordinat,
-    whatsapp: toko.whatsapp,
+    // Data lama bisa berformat "+62 812-3341-9081" → ditampilkan & disimpan ulang sebagai digit saja.
+    whatsapp: toko.whatsapp.replace(/\D/g, ""),
     jamBuka: toko.jamBuka,
     fasilitas: toko.fasilitas ?? [],
     aktifPublik: toko.aktifPublik,
@@ -72,8 +74,14 @@ export function validateTokoForm(values: TokoFormValues): TokoFormErrors {
     errors.tahunBerdiri = `Isi tahun antara 1900–${tahunSekarang}.`;
   }
   if (values.kategori.length === 0) errors.kategori = "Pilih minimal satu spesialisasi.";
-  if (!/^\+?[0-9\s-]{9,}$/.test(values.whatsapp.trim())) errors.whatsapp = "Format nomor WhatsApp belum valid.";
+  const wa = values.whatsapp.trim();
+  if (!wa) errors.whatsapp = "Nomor WhatsApp wajib diisi.";
+  else if (/\D/.test(wa)) errors.whatsapp = "Nomor WhatsApp hanya boleh berisi angka.";
+  else if (!/^(?:62|0)8/.test(wa)) errors.whatsapp = "Nomor WhatsApp harus diawali 08 atau 628.";
+  else if (wa.length < 10 || wa.length > 14) errors.whatsapp = "Nomor WhatsApp harus 10–14 digit.";
   if (!values.jamBuka.trim()) errors.jamBuka = "Jam operasional wajib diisi.";
   if (!values.wilayah) errors.wilayah = "Pilih wilayah lorong.";
+  if (values.koordinat.trim() && !parseKoordinat(values.koordinat)) errors.koordinat = "Koordinat harus berformat 'lat, lng', mis. -7.942100, 112.608700.";
+  if (values.alamat.length > 200) errors.alamat = "Alamat maksimal 200 karakter.";
   return errors;
 }

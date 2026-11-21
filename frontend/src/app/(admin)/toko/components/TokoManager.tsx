@@ -13,7 +13,7 @@ import type { RingkasanToko, StatusToko, Toko } from "@/types";
 import { TokoFilterBar, type TokoFilters } from "./TokoFilterBar";
 import { TokoTable } from "./TokoTable";
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 8;
 const INITIAL_FILTERS: TokoFilters = { keyword: "", lokasi: "", kategori: "", status: "semua" };
 
 /**
@@ -34,7 +34,7 @@ export function TokoManager({ initialToko, ringkasan }: { initialToko: Toko[]; r
     () =>
       tokoList.filter((toko) => {
         const cocokKeyword = !keyword || [toko.nama, toko.pemilik, toko.nib].some((field) => field.toLowerCase().includes(keyword));
-        const cocokLokasi = !filters.lokasi || toko.lokasiGang.startsWith(filters.lokasi);
+        const cocokLokasi = !filters.lokasi || toko.wilayah === filters.lokasi;
         const cocokKategori = !filters.kategori || toko.spesialisasi === filters.kategori;
         const cocokStatus = filters.status === "semua" || toko.status === filters.status;
         return cocokKeyword && cocokLokasi && cocokKategori && cocokStatus;

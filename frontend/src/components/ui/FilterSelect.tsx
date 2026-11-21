@@ -29,7 +29,8 @@ export function FilterSelect({ label, value, options, onChange, icon, className 
         <span className="flex min-w-0 items-center gap-3">
           {icon && <span className="shrink-0 text-on-surface-variant [&_svg]:size-4">{icon}</span>}
           <span className="min-w-0 truncate">
-            <SelectValue />
+            {/* Label diisi langsung agar sudah tampil di HTML server (Radix baru mengisinya setelah hidrasi). */}
+            <SelectValue>{options.find((option) => option.value === value)?.label}</SelectValue>
           </span>
         </span>
       </SelectTrigger>

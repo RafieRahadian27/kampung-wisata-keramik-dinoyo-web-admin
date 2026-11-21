@@ -38,7 +38,8 @@ const contentSecurityPolicy = [
  * - nosniff: browser tidak menebak tipe konten (berkas teks tidak dijalankan sebagai skrip)
  * - DENY: panel admin tidak boleh ditampilkan di <iframe> situs lain (clickjacking)
  * - Referrer-Policy: URL internal panel tidak bocor utuh ke situs luar
- * - Permissions-Policy: matikan fitur perangkat yang tidak dipakai panel
+ * - Permissions-Policy: matikan fitur perangkat yang tidak dipakai panel; GPS hanya untuk origin
+ *   sendiri (tombol "Lokasi saya" saat menandai lokasi studio di form toko)
  * - X-Robots-Tag: panel privat tidak boleh muncul di hasil pencarian. Berbeda dengan robots.txt
  *   (hanya "permintaan" agar tidak dijelajah), noindex benar-benar mengeluarkan URL dari indeks —
  *   dan lewat header ia juga berlaku untuk respons non-HTML (gambar, JSON).
@@ -49,7 +50,7 @@ const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self), payment=()" },
   { key: "X-Robots-Tag", value: "noindex, nofollow" },
   ...(process.env.NODE_ENV === "production" ? [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" }] : []),
 ];

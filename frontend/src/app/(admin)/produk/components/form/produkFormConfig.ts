@@ -1,4 +1,4 @@
-import { NAMA_PRODUK_PATTERN } from "@/lib/validation/text";
+import { BAHAN_PRODUK_PATTERN, NAMA_PRODUK_PATTERN } from "@/lib/validation/text";
 import type { ProdukFormValues, StatusProduk } from "@/types";
 
 export type ProdukFormErrors = Partial<Record<keyof ProdukFormValues, string>>;
@@ -73,7 +73,8 @@ export function validateProdukForm(values: ProdukFormValues): ProdukFormErrors {
   if (!nama) errors.nama = "Nama produk wajib diisi.";
   else if (nama.length < 3) errors.nama = "Nama produk minimal 3 karakter.";
   else if (nama.length > 120) errors.nama = "Nama produk maksimal 120 karakter.";
-  else if (!NAMA_PRODUK_PATTERN.test(nama)) errors.nama = "Hanya huruf, angka, spasi, dan tanda baca sederhana (. , - & ( ) / ').";
+  else if (/\d/.test(nama)) errors.nama = "Nama produk tidak boleh mengandung angka.";
+  else if (!NAMA_PRODUK_PATTERN.test(nama)) errors.nama = "Hanya huruf, spasi, dan tanda baca sederhana (. , - & ( ) / ').";
 
   if (!values.kategori) errors.kategori = "Pilih kategori produk.";
   if (!values.teknik) errors.teknik = "Pilih teknik pembuatan.";
@@ -82,7 +83,7 @@ export function validateProdukForm(values: ProdukFormValues): ProdukFormErrors {
   if (!bahan) errors.bahan = "Bahan wajib diisi.";
   else if (bahan.length < 3) errors.bahan = "Bahan minimal 3 karakter.";
   else if (bahan.length > 80) errors.bahan = "Bahan maksimal 80 karakter.";
-  else if (!NAMA_PRODUK_PATTERN.test(bahan)) errors.bahan = "Bahan hanya boleh huruf, angka, spasi, dan tanda baca sederhana.";
+  else if (!BAHAN_PRODUK_PATTERN.test(bahan)) errors.bahan = "Bahan hanya boleh huruf, angka, spasi, dan tanda baca sederhana.";
 
   if (!values.harga) errors.harga = "Harga jual wajib diisi.";
   else if (!Number.isInteger(values.harga) || values.harga < 1000) errors.harga = "Harga minimal Rp 1.000.";

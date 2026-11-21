@@ -138,7 +138,7 @@ export function SelectField({ label, options, value, onValueChange, placeholder 
     <FieldShell id={id} label={label} required={required} hint={hint} error={error} className={containerClassName}>
       <Select value={value === "" && !items.some((item) => item.value === "") ? undefined : keRadix(value)} onValueChange={(next) => onValueChange(dariRadix(next))} disabled={disabled}>
         <SelectTrigger id={id} aria-invalid={Boolean(error) || undefined} aria-describedby={error ? `${id}-error` : undefined} aria-required={required || undefined} className={className}>
-          <SelectValue placeholder={placeholder} />
+          <SelectValue placeholder={placeholder}>{items.find((item) => item.value === value)?.label}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           {items.map((item) => (

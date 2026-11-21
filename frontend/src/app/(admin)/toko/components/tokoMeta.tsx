@@ -2,6 +2,7 @@ import { Award, CircleCheck, CirclePause, Hourglass, Medal } from "lucide-react"
 import type { ReactNode } from "react";
 import type { BadgeTone } from "@/components/ui/Badge";
 import type { BadgeToko, StatusToko } from "@/types";
+import { WILAYAH_LORONG } from "./form/formConfig";
 
 /** Pemetaan status/spesialisasi toko ke warna & ikon badge — dipakai tabel dan kartu mobile. */
 export const STATUS_TOKO: Record<StatusToko, { label: string; tone: BadgeTone; icon: ReactNode }> = {
@@ -30,10 +31,9 @@ export function TokoBadge({ badge }: { badge?: BadgeToko }) {
 }
 
 export const LOKASI_OPTIONS = [
-  { value: "", label: "Semua Lokasi / Gang" },
-  { value: "Gg. IX", label: "Gang IX" },
-  { value: "Gg. X", label: "Gang X" },
-  { value: "Jl. MT Haryono", label: "Jl. MT Haryono" },
+  { value: "", label: "Semua Wilayah Lorong" },
+  // Sama dengan pilihan wilayah di formulir toko & warna di Peta Sebaran Lorong.
+  ...WILAYAH_LORONG.map((wilayah) => ({ value: wilayah, label: wilayah })),
 ];
 
 export const KATEGORI_OPTIONS = [

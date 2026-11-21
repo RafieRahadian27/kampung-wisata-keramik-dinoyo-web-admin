@@ -19,7 +19,7 @@ export function AdminShell({ user, children }: { user: AdminUser; children: Reac
   return (
     <UserAuthProvider user={user}>
       <AdminShellProvider>
-        <div className="min-h-dvh lg:pl-72">
+        <div className="min-h-dvh lg:pl-72 print:pl-0">
           <Sidebar />
           <div className="flex min-h-dvh min-w-0 flex-col">
             <Header />

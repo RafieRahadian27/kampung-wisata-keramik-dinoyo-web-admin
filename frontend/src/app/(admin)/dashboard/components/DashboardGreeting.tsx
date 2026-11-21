@@ -30,10 +30,12 @@ export function DashboardGreeting({ admin, tanggal }: DashboardGreetingProps) {
       </div>
       <div className="flex flex-wrap gap-3">
         <ButtonLink href="/toko/tambah" variant="tonal">
-          <Warehouse className="size-4" aria-hidden />+ Tambah Toko
+          <Warehouse className="size-4" aria-hidden />
+          Tambah Toko
         </ButtonLink>
         <ButtonLink href="/produk/tambah" variant="primary" className="px-5">
-          <CirclePlus className="size-4" aria-hidden />+ Tambah Produk
+          <CirclePlus className="size-4" aria-hidden />
+          Tambah Produk
         </ButtonLink>
       </div>
     </header>
