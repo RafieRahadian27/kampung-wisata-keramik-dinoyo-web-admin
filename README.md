@@ -106,6 +106,7 @@ Buka <http://localhost:3000>. Anda akan diarahkan ke halaman login.
 | `backend` | `npm run db:migrate -- --name <nama>` | Buat & jalankan migrasi baru setelah mengubah `prisma/schema.prisma` |
 | `backend` | `npm run db:deploy` / `db:status` | Jalankan migrasi yang belum ada tanpa menghapus data / cek status migrasi |
 | `backend` | `npm run db:seed` / `db:studio` | Isi ulang data demo / buka Prisma Studio |
+| `backend` | `npm run db:katalog` | **Tanpa menghapus data**: tambahkan toko & produk demo yang belum ada (total 16 toko, 44 produk) dan samakan `jumlah_produk` tiap toko |
 
 > Data disimpan di **MySQL**, jadi perubahan (tambah/edit/hapus toko, status akun, sesi login) tetap ada walau server di-restart.
 > Jalankan `npm run db:reset` untuk mengembalikan data ke kondisi awal.
@@ -595,6 +596,18 @@ tetap ketat: `default-src 'self'`, `object-src 'none'`, `base-uri 'self'`, `form
 
 
 ## Timer Pengajuan, Peta Lorong, Validasi & Lapisan Models
+
+### Revisi: tombol, peta lokasi, validasi, data demo & tombol yang tidak berfungsi
+
+| Revisi | File | Perubahan |
+| --- | --- | --- |
+| Tombol "+" dobel | `DashboardGreeting.tsx`, `toko/page.tsx` | Ikon "+" dan teks "+ Tambah …" tampil bersamaan → teks "+" dihapus, tinggal satu ikon |
+| Peta di Tambah/Edit Toko | [`LocationSection.tsx`](frontend/src/app/(admin)/toko/components/form/LocationSection.tsx), [`PetaPilihLokasi.tsx`](frontend/src/app/(admin)/toko/components/peta/PetaPilihLokasi.tsx) | Gambar statis diganti peta Leaflet interaktif: klik peta / seret pin → koordinat terisi; koordinat bisa diketik & peta ikut pindah; tombol **Lokasi saya** (GPS, `Permissions-Policy: geolocation=(self)`) dan **Pusat Dinoyo**; koordinat divalidasi |
+| WhatsApp toko hanya angka | [`ContactSection.tsx`](frontend/src/app/(admin)/toko/components/form/ContactSection.tsx), `validators/index.ts` | Huruf langsung dibuang saat diketik + pesan; wajib 08/628, 10–14 digit. Backend menolak format lain (`+62 812-…` lama dinormalisasi ke digit saat diedit) |
+| Nama produk hanya huruf | [`ProdukForm.tsx`](frontend/src/app/(admin)/produk/components/form/ProdukForm.tsx), `lib/validate.ts` | Angka & simbol dibuang saat diketik + pesan; backend `NAMA_PRODUK` tanpa angka. Kolom **bahan** tetap boleh angka (mis. "Kiln 1200°") |
+| Data lebih banyak | [`katalog-tambahan.data.ts`](backend/src/data/katalog-tambahan.data.ts), `prisma/seed-katalog.ts` | 16 toko (berkoordinat, tampil di peta) & 44 produk tersebar ke semua toko, termasuk toko akun demo pengrajin. SKU demo berseri `DNY-VAS-K101` agar tidak bentrok dengan SKU buatan server |
+| Tombol tanpa fungsi | `HeaderMenus.tsx`, `ReviewPengajuanDialog.tsx`, `UnduhCsvButton.tsx`, `ReportToolbar.tsx` | **Notifikasi** (data nyata: pengajuan menunggu/mendesak/kedaluwarsa, produk stok habis), **Bantuan** (pintasan sesuai peran + kontak), **Review** pengajuan (dialog detail + putuskan), **Unduh/Ekspor Rekap** toko, produk, akun → CSV sungguhan (NIK tidak diekspor, aman dari CSV injection), **Ekspor Laporan** → CSV / cetak / simpan PDF (sidebar & header disembunyikan saat cetak), **Undang Pengrajin** → salin tautan /daftar |
+| Filter & paginasi | `tokoMeta.tsx`, `TokoManager.tsx`, `ProdukManager.tsx` | Filter lokasi memakai wilayah lorong (toko Gg. II/IV sebelumnya tak pernah muncul); 8 item per halaman |
 
 ### Frontend
 
