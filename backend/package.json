@@ -15,6 +15,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:status": "prisma migrate status",
     "db:seed": "prisma db seed",
+    "db:katalog": "tsx prisma/seed-katalog.ts",
     "db:reset": "prisma migrate reset --force && prisma db seed",
     "db:studio": "prisma studio",
     "test": "node --import tsx --test --test-concurrency=1 \"tests/**/*.test.ts\""

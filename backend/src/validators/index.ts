@@ -1,4 +1,4 @@
-import { EMAIL, EMAIL_MAX, NAMA_ORANG, NAMA_PRODUK, NIK, USERNAME, WHATSAPP_ID } from "../lib/validate";
+import { BAHAN_PRODUK, EMAIL, EMAIL_MAX, NAMA_ORANG, NAMA_PRODUK, NIK, USERNAME, WHATSAPP_ID } from "../lib/validate";
 import { TEKNIK_PEMBUATAN } from "../models";
 import { PASSWORD_MAX, PASSWORD_MIN, validatePassword } from "../lib/validatePassword";
 import type { Schema } from "../utils/schema";
@@ -36,7 +36,6 @@ export const registerSchema: Schema = {
   },
 };
 
-const WHATSAPP = /^\+?[0-9\s-]{9,20}$/;
 const KOORDINAT = /^-?\d{1,2}(\.\d+)?,\s*-?\d{1,3}(\.\d+)?$/;
 
 /** Untuk POST. PUT memakai skema yang sama dalam mode parsial. */
@@ -50,7 +49,8 @@ export const tokoSchema: Schema = {
   wilayah: { type: "string", label: "Wilayah", required: true, max: 120 },
   alamat: { type: "string", label: "Alamat", max: 200, default: "" },
   koordinat: { type: "string", label: "Koordinat", max: 40, pattern: KOORDINAT, patternMessage: "Koordinat harus berformat 'lat, lng'" },
-  whatsapp: { type: "string", label: "Nomor WhatsApp", required: true, pattern: WHATSAPP, patternMessage: "Format nomor WhatsApp belum valid" },
+  // Hanya digit: diawali 08 atau 62, total 10–14 digit (sama dengan pendaftaran akun).
+  whatsapp: { type: "string", label: "Nomor WhatsApp", required: true, pattern: WHATSAPP_ID, patternMessage: "Nomor WhatsApp hanya angka, diawali 08 atau 62, 10–14 digit" },
   jamBuka: { type: "string", label: "Jam buka", required: true, max: 80 },
   aktifPublik: { type: "boolean", default: false },
   akreditasi: { type: "boolean", default: false },
@@ -86,11 +86,11 @@ export const keputusanSchema: Schema = {
 /** Produk baru. Kategori dicek ulang terhadap tabel master `kategori_produk` di service. */
 export const produkSchema: Schema = {
   tokoSlug: { type: "string", label: "Toko", required: true, max: 80 },
-  nama: { type: "string", label: "Nama produk", required: true, min: 3, max: 120, pattern: NAMA_PRODUK, patternMessage: "Nama produk hanya boleh berisi huruf, angka, spasi, dan tanda baca sederhana (. , - & ( ) / ')" },
+  nama: { type: "string", label: "Nama produk", required: true, min: 3, max: 120, pattern: NAMA_PRODUK, patternMessage: "Nama produk hanya boleh berisi huruf, spasi, dan tanda baca sederhana (. , - & ( ) / ') — tanpa angka" },
   kategori: { type: "string", label: "Kategori", required: true, max: 60 },
   // Daftar tertutup (models/produk.model.ts) — sama dengan pilihan dropdown di form produk.
   teknik: { type: "string", label: "Teknik pembuatan", required: true, enum: TEKNIK_PEMBUATAN },
-  bahan: { type: "string", label: "Bahan", required: true, min: 3, max: 80, pattern: NAMA_PRODUK, patternMessage: "Bahan hanya boleh berisi huruf, angka, spasi, dan tanda baca sederhana" },
+  bahan: { type: "string", label: "Bahan", required: true, min: 3, max: 80, pattern: BAHAN_PRODUK, patternMessage: "Bahan hanya boleh berisi huruf, angka, spasi, dan tanda baca sederhana" },
   harga: { type: "number", label: "Harga", required: true, integer: true, min: 1000, max: 100_000_000 },
   catatanHarga: { type: "string", label: "Catatan harga", max: 80, default: "" },
   status: { type: "string", label: "Status stok", required: true, enum: ["tersedia", "habis", "preorder"] },

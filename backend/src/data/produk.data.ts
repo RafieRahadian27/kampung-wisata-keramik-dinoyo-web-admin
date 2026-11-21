@@ -59,7 +59,7 @@ export const produkSeed: Produk[] = [
   },
   {
     id: 4,
-    nama: "Guci Pusaka Dinoyo 1",
+    nama: "Guci Pusaka Dinoyo",
     sku: "DNY-MST-007",
     teknik: "Lukis Tangan Halus",
     foto: "/images/produk-guci-pusaka.jpg",

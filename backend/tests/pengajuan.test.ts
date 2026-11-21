@@ -51,8 +51,16 @@ describe("Validasi nama pengrajin & produk", () => {
     assert.match(errorField(produkSchema, { teknik: "asal ketik" }, "teknik") ?? "", /harus salah satu dari/);
   });
 
-  it("nama produk menolak karakter HTML/simbol aneh", () => {
-    assert.equal(errorField(produkSchema, { nama: "Vas Wabi-Sabi (Edisi 2)" }, "nama"), undefined);
+  it("nama produk hanya huruf: angka & karakter HTML ditolak", () => {
+    assert.equal(errorField(produkSchema, { nama: "Vas Wabi-Sabi (Edisi Khusus)" }, "nama"), undefined);
+    assert.match(errorField(produkSchema, { nama: "Guci Pusaka 1" }, "nama") ?? "", /tanpa angka/);
     assert.match(errorField(produkSchema, { nama: "Vas <b>murah</b>" }, "nama") ?? "", /Nama produk hanya boleh/);
+  });
+
+  it("bahan tetap boleh angka (suhu bakar), WhatsApp toko hanya digit 08/62", () => {
+    assert.equal(errorField(produkSchema, { bahan: "Terracotta Kiln 1100°" }, "bahan"), undefined);
+    assert.equal(errorField(tokoSchema, { whatsapp: "081233419901" }, "whatsapp"), undefined);
+    assert.match(errorField(tokoSchema, { whatsapp: "08123abc" }, "whatsapp") ?? "", /hanya angka/);
+    assert.match(errorField(tokoSchema, { whatsapp: "+62 812-3341-9081" }, "whatsapp") ?? "", /hanya angka/);
   });
 });

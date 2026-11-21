@@ -1,6 +1,7 @@
 import { akunSeed } from "../src/data/akun.data";
-import { kategoriProduk, produkSeed } from "../src/data/produk.data";
-import { pengajuanSeed, tokoSeed } from "../src/data/toko.data";
+import { semuaProduk as produkSeed, semuaToko as tokoSeed } from "../src/data/katalog.data";
+import { kategoriProduk } from "../src/data/produk.data";
+import { pengajuanSeed } from "../src/data/toko.data";
 import { userSeed } from "../src/data/user.data";
 import { prisma } from "../src/lib/prisma";
 import { peranToDb } from "../src/repositories/akun.repository";

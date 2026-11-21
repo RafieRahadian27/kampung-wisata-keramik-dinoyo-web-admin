@@ -12,8 +12,10 @@ export const EMAIL_MAX = 120;
 export const USERNAME = /^[A-Za-z][A-Za-z0-9_]{3,19}$/;
 /** Nama orang: hanya huruf (semua aksara), spasi, titik (gelar "H.", "Bpk."), petik, tanda hubung. Tanpa angka/simbol. */
 export const NAMA_ORANG = /^[\p{L}][\p{L} .'-]*$/u;
-/** Nama produk/bahan: diawali huruf/angka; boleh spasi & tanda baca sederhana. Menolak <, >, emoji, dsb. */
-export const NAMA_PRODUK = /^[\p{L}\p{N}][\p{L}\p{N} .,'&()/-]*$/u;
+/** Nama produk: HANYA huruf, spasi & tanda baca sederhana — tanpa angka (aturan paguyuban). */
+export const NAMA_PRODUK = /^[\p{L}][\p{L} .,'&()/-]*$/u;
+/** Bahan: boleh angka (mis. "Kiln 1100°"), tetap menolak <, >, emoji, dsb. */
+export const BAHAN_PRODUK = /^[\p{L}\p{N}][\p{L}\p{N} .,'&()/°-]*$/u;
 export const NIK = /^\d{16}$/;
 export const WHATSAPP_ID = /^(?:\+?62|0)8\d{8,11}$/;
 
